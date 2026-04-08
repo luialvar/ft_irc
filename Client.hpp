@@ -11,7 +11,7 @@ private:
 	std::string	_ip;
 	std::string	_nickname;
 	std::string	_username;
-	std::string	_realname;
+	std::string	_realname; //not sure if we need it
 	std::string	_recvBuffer;
 	bool		_passOk;
 	bool		_registered;

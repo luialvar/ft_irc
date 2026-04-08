@@ -6,6 +6,7 @@
 #include <sstream>        // -> std::stringstream
 #include <cstring>        // -> memset y utilidades tipo C
 #include <cstdlib>        // -> utilidades generales C
+#include <cerrno>
 
 #include <unistd.h>       // -> close()
 #include <fcntl.h>        // -> fcntl(), O_NONBLOCK
@@ -16,7 +17,10 @@
 #include <netinet/in.h>   // -> sockaddr_in, htons(), INADDR_ANY
 #include <arpa/inet.h>    // -> inet_ntoa(), inet_addr(), inet_ntop()
 
-bool Server::_signal = false;
+volatile sig_atomic_t Server::_signal = false;
+// _signal is static because it belongs to the Server class, not one object.
+// volatile tells the compiler it can change asynchronously.
+// sig_atomic_t is the safe type to modify inside a signal handler.
 
 Server::Server(int port, const std::string& password)
 	: _port(port), _password(password), _serverSocketFd(-1)
@@ -37,28 +41,47 @@ void Server::run()
 
 	while (Server::_signal == false) //-> run the server until the signal is received
 	{
-		if((poll(&_fds[0],_fds.size(),-1) == -1) && Server::_signal == false) //-> wait for an event
+		int pollResult = poll(&_fds[0], _fds.size(), -1); //-> wait for an event
 		//when it recieves something it goes down to the for
-			throw(std::runtime_error("poll() faild"));
-
-		for (size_t i = 0; i < _fds.size(); i++) //-> check all file descriptors
+		if (pollResult == -1)
 		{
-			if (_fds[i].revents & POLLIN)//-> check if there is data to read
+			if (errno == EINTR)
+				break;
+			throw(std::runtime_error("poll() faild"));
+		}
+		for (size_t i = 0; i < _fds.size(); ) //-> check all file descriptors
+		{
+			int currentFd = _fds[i].fd;
+
+			if (_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
 			{
-				if (_fds[i].fd == _serverSocketFd)
+				if (currentFd == _serverSocketFd)
+					throw(std::runtime_error("server socket poll error"));
+				else
+				{
+					std::cout << "Client <" << currentFd << "> Disconnected" << std::endl;
+					removeClient(currentFd);
+					close(currentFd);
+				}
+			}
+			else if (_fds[i].revents & POLLIN) //-> check if there is data to read
+			{
+				if (currentFd == _serverSocketFd)
 					acceptNewClient(); //-> accept new client
 				else
-					receiveNewData(_fds[i].fd); //-> receive new data from a registered client
+					receiveNewData(currentFd); //-> receive new data from a registered client
 			}
+			if (i < _fds.size() && _fds[i].fd == currentFd)
+				++i;
 		}
 	}
+	std::cout << std::endl << "Signal Received!" << std::endl;
 	closeAllFds(); //-> close the file descriptors when the server stops
 }
 
 void Server::signalHandler(int signum)
 {
 	(void)signum;
-	std::cout << std::endl << "Signal Received!" << std::endl;
 	Server::_signal = true; //-> set the static boolean to true to stop the server
 }
 
@@ -70,6 +93,7 @@ void Server::initServerSocket()
 	struct pollfd NewPoll; //used for monitoring file descriptors for I/O events
 	//commonly employed with the poll() system call to perform multiplexed I/O
 
+	std::memset(&add, 0, sizeof(add));
 	add.sin_family = AF_INET; //-> set the address family to ipv4, so 16 bits directions
 	add.sin_port = htons(this->_port); //-> convert the port to network byte order (big endian)
 	add.sin_addr.s_addr = INADDR_ANY; //-> set the address to any local machine address
@@ -101,10 +125,6 @@ void Server::initServerSocket()
 	NewPoll.revents = 0; //-> set the revents to 0
 	_fds.push_back(NewPoll); //-> add the server socket to the pollfd
 }
-
-void Server::setupServerAddress();
-
-void Server::addServerSocketToPoll();
 
 void Server::acceptNewClient()
 {
@@ -145,7 +165,22 @@ void Server::receiveNewData(int fd)
 
 	ssize_t bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
 
-	if (bytes <= 0)
+	if (bytes > 0)
+	{
+		buffer[bytes] = '\0';
+		std::cout << "Client <" << fd << "> Data: " << buffer;
+		Client *client = findClientByFd(fd);
+		if (client == 0)
+		{
+			std::cerr << "Client <" << fd << "> not found" << std::endl;
+			removeClient(fd);
+			close(fd);
+			return;
+		}
+		client->appendToBuffer(buffer);
+		processClientBuffer(*client);
+	}
+	else if (bytes == 0)
 	{
 		std::cout << "Client <" << fd << "> Disconnected" << std::endl;
 		removeClient(fd);
@@ -153,9 +188,13 @@ void Server::receiveNewData(int fd)
 	}
 	else
 	{
-		buffer[bytes] = '\0';
-		std::cout << "Client <" << fd << "> Data: " << buffer;
-		// here we process after
+		if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+		{
+			return;
+		}
+		std::cerr << "recv() failed for client <" << fd << ">" << std::endl;
+		removeClient(fd);
+		close(fd);
 	}
 }
 
@@ -199,39 +238,44 @@ void Server::removeClient(int fd)
 	}
 }
 
-// client lookup
-Client* Server::findClientByFd(int fd);
-const Client* Server::findClientByFd(int fd) const;
+Client* Server::findClientByFd(int fd)
+{
+	for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i)
+	{
+		if (_clients[i].getFd() == fd)
+			return &_clients[i];
+	}
+	return 0;
+}
 
-// send / disconnect
-void Server::sendMessage(int fd, const std::string& message);
-void Server::disconnectClient(int fd, const std::string& reason);
+const Client* Server::findClientByFd(int fd) const
+{
+	for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i)
+	{
+		if (_clients[i].getFd() == fd)
+			return &_clients[i];
+	}
+	return 0;
+}
 
-// parsing / buffering
-void Server::processClientBuffer(Client& client);
-bool Server::extractOneMessage(Client& client, std::string& message);
-void Server::handleMessage(Client& client, const std::string& message);
+void Server::processClientBuffer(Client& client)
+{
+	std::string message;
 
-// registration
-void Server::tryRegisterClient(Client& client);
-bool Server::isClientFullyRegistered(const Client& client) const;
-std::string Server::buildWelcomeMessage(const Client& client) const;
-bool Server::isNicknameInUse(const std::string& nickname) const;
+	while (extractOneMessage(client, message))
+	{
+		std::cout << "Client <" << client.getFd() << "> Message: "
+			<< message << std::endl;
+	}
+}
 
-// command handlers
-void Server::handlePass(Client& client, const std::vector<std::string>& tokens);
-void Server::handleNick(Client& client, const std::vector<std::string>& tokens);
-void Server::handleUser(Client& client, const std::vector<std::string>& tokens);
-void Server::handlePing(Client& client, const std::vector<std::string>& tokens);
-void Server::handlePong(Client& client, const std::vector<std::string>& tokens);
-void Server::handleQuit(Client& client, const std::vector<std::string>& tokens);
-void Server::handleJoin(Client& client, const std::vector<std::string>& tokens);
-void Server::handlePart(Client& client, const std::vector<std::string>& tokens);
-void Server::handlePrivmsg(Client& client, const std::vector<std::string>& tokens);
-void Server::handleKick(Client& client, const std::vector<std::string>& tokens);
-void Server::handleInvite(Client& client, const std::vector<std::string>& tokens);
-void Server::handleTopic(Client& client, const std::vector<std::string>& tokens);
-void Server::handleMode(Client& client, const std::vector<std::string>& tokens);
+bool Server::extractOneMessage(Client& client, std::string& message)
+{
+	std::string::size_type endPos = client.getRecvBuffer().find("\r\n");
 
-// utils
-std::vector<std::string> Server::splitIrcMessage(const std::string& message) const;
+	if (endPos == std::string::npos)
+		return false;
+	message = client.getRecvBuffer().substr(0, endPos);
+	client.eraseFromBuffer(endPos + 2);
+	return true;
+}

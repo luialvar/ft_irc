@@ -6,6 +6,7 @@
 #include <string>       // -> std::string
 #include <vector>       // -> std::vector
 #include <poll.h>       // -> struct pollfd, poll()
+#include <csignal>
 
 class Server
 {
@@ -16,7 +17,8 @@ private:
 	std::vector<Client>		_clients;
 	std::vector<pollfd>		_fds;
 
-	static bool				_signal;
+	static volatile sig_atomic_t _signal;
+
 
 public:
 	Server(int port, const std::string& password);
@@ -28,8 +30,6 @@ public:
 
 private:
 	void initServerSocket();
-	void setupServerAddress();
-	void addServerSocketToPoll();
 	void acceptNewClient();
 	void receiveNewData(int fd);
 	void closeAllFds();
