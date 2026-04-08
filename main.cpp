@@ -31,7 +31,7 @@ static bool parsePort(const std::string& str, int& port)
 	if (ss.fail() || !ss.eof())
 		return false;
 	//maybe this could be better: if (port < 1024 || port > 49151)
-	if (port < 1 || port > 65535)
+	if (port < 1024 || port > 65535)
 		return false;
 	return true;
 }

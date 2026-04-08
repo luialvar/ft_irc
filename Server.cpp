@@ -266,6 +266,7 @@ void Server::processClientBuffer(Client& client)
 	{
 		std::cout << "Client <" << client.getFd() << "> Message: "
 			<< message << std::endl;
+		//here you have to follow the parsing
 	}
 }
 

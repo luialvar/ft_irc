@@ -20,29 +20,29 @@ private:
 	static volatile sig_atomic_t _signal;
 
 
-public:
-	Server(int port, const std::string& password);
-	~Server();
+	public:
+		Server(int port, const std::string& password); // [x]
+		~Server(); // [x]
 
-	void run();
+		void run(); // [x]
 
-	static void signalHandler(int signum);
+		static void signalHandler(int signum); // [x]
 
-private:
-	void initServerSocket();
-	void acceptNewClient();
-	void receiveNewData(int fd);
-	void closeAllFds();
-	void removeClient(int fd);
+	private:
+		void initServerSocket(); // [x]
+		void acceptNewClient(); // [x]
+		void receiveNewData(int fd); // [x]
+		void closeAllFds(); // [x]
+		void removeClient(int fd); // [x]
 
-	Client* findClientByFd(int fd);
-	const Client* findClientByFd(int fd) const;
+		Client* findClientByFd(int fd); // [x]
+		const Client* findClientByFd(int fd) const; // [x]
 
 	void sendMessage(int fd, const std::string& message);
 	void disconnectClient(int fd, const std::string& reason);
 
-	void processClientBuffer(Client& client);
-	bool extractOneMessage(Client& client, std::string& message);
+		void processClientBuffer(Client& client); // [x]
+		bool extractOneMessage(Client& client, std::string& message); // [x]
 	void handleMessage(Client& client, const std::string& message);
 
 	void tryRegisterClient(Client& client);
