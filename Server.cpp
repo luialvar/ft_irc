@@ -25,7 +25,7 @@ volatile sig_atomic_t Server::_signal = false;
 // sig_atomic_t is the safe type to modify inside a signal handler.
 
 Server::Server(int port, const std::string& password)
-	: _port(port), _password(password), _serverSocketFd(-1)
+	: _port(port), _password(password), _serverName("irc.local"), _serverSocketFd(-1)
 {
 	initCommandHandlers();
 }
@@ -293,6 +293,9 @@ void Server::processClientBuffer(Client& client)
 	}
 }
 
+
+
+
 bool Server::extractOneMessage(Client& client, std::string& message)
 {
 	std::string::size_type endPos = client.getRecvBuffer().find("\r\n");
@@ -313,21 +316,109 @@ void Server::executeCommand(Client& client, const CommandParts& parts)
 
 	if (it == _commandHandlers.end())
 	{
-		// Placeholder para ERR_UNKNOWNCOMMAND
-		std::cout << "Client <" << client.getFd() << "> sent an unknown command: " << parts.command << std::endl;
-		// sendMessage(client.getFd(), ...);
+		// ERR_UNKNOWNCOMMAND (421)
+		std::string nick = client.getNickname().empty() ? "*" : client.getNickname();
+		sendReply(client, "421 " + nick + " " + parts.command + " :Unknown command");
 		return;
 	}
 
 	if (!client.isRegistered() && !(parts.command == "PASS" || parts.command == "NICK" || parts.command == "USER" || parts.command == "QUIT"))
 	{
-		// Placeholder para ERR_NOTREGISTERED
-		std::cout << "Client <" << client.getFd() << "> is not registered to execute " << parts.command << std::endl;
-		// sendMessage(client.getFd(), ...);
+		// ERR_NOTREGISTERED (451)
+		std::string nick = client.getNickname().empty() ? "*" : client.getNickname();
+		sendReply(client, "451 " + nick + " :You have not registered");
 		return;
 	}
 
 	// Llamar a la función manejadora a través del puntero
 	CommandHandler handler = it->second;
 	(this->*handler)(client, parts.args);
+}
+
+void Server::sendMessage(int fd, const std::string& message)
+{
+	std::string full_message = message + "\r\n";
+	if (send(fd, full_message.c_str(), full_message.length(), 0) < 0)
+	{
+		std::cerr << "send() failed for client <" << fd << ">" << std::endl;
+	}
+}
+
+void Server::sendReply(const Client& client, const std::string& message)
+{
+	// Formato estándar de respuesta: :<nombre_servidor> <mensaje>
+	sendMessage(client.getFd(), ":" + _serverName + " " + message);
+}
+
+void Server::handlePass(Client& client, const std::vector<std::string>& tokens)
+{
+	(void) tokens;
+	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+}
+
+void Server::handleNick(Client& client, const std::vector<std::string>& tokens)
+{
+	(void) tokens;
+	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+}
+void Server::handleUser(Client& client, const std::vector<std::string>& tokens)
+{
+	(void) tokens;
+	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+}
+void Server::handlePing(Client& client, const std::vector<std::string>& tokens)
+{
+	if (tokens.empty())
+	{
+		// ERR_NOORIGIN (409)
+		sendReply(client, "409 " + client.getNickname() + " :No origin specified");
+		return;
+	}
+	// Responder con PONG. El formato es "PONG <servidor> :<token>"
+	sendMessage(client.getFd(), "PONG " + _serverName + " :" + tokens[0]);
+}
+void Server::handlePong(Client& client, const std::vector<std::string>& tokens)
+{
+	(void) tokens;
+	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+}
+void Server::handleQuit(Client& client, const std::vector<std::string>& tokens)
+{
+	(void) tokens;
+	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+}
+void Server::handleJoin(Client& client, const std::vector<std::string>& tokens)
+{
+	(void) tokens;
+	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+}
+void Server::handlePart(Client& client, const std::vector<std::string>& tokens)
+{
+	(void) tokens;
+	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+}
+void Server::handlePrivmsg(Client& client, const std::vector<std::string>& tokens)
+{
+	(void) tokens;
+	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+}
+void Server::handleKick(Client& client, const std::vector<std::string>& tokens)
+{
+	(void) tokens;
+	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+}
+void Server::handleInvite(Client& client, const std::vector<std::string>& tokens)
+{
+	(void) tokens;
+	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+}
+void Server::handleTopic(Client& client, const std::vector<std::string>& tokens)
+{
+	(void) tokens;
+	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+}
+void Server::handleMode(Client& client, const std::vector<std::string>& tokens)
+{
+	(void) tokens;
+	std::cout<<"cliente: " << client.getUsername() <<std::endl;
 }
