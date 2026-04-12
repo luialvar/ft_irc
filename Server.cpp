@@ -1,5 +1,7 @@
 // Server.cpp
 #include "Server.hpp"     // -> declaración de la clase Server
+#include "includes/ft_irc.hpp"
+#include "includes/parser.hpp"
 
 #include <iostream>       // -> std::cout, std::cerr
 #include <stdexcept>      // -> std::runtime_error, std::exception
@@ -25,6 +27,7 @@ volatile sig_atomic_t Server::_signal = false;
 Server::Server(int port, const std::string& password)
 	: _port(port), _password(password), _serverSocketFd(-1)
 {
+	initCommandHandlers();
 }
 
 Server::~Server()
@@ -105,14 +108,14 @@ void Server::initServerSocket()
 		throw(std::runtime_error("faild to create socket"));
 
 	int en = 1;
-	if(setsockopt(_serverSocketFd, SOL_SOCKET, SO_REUSEADDR, &en, sizeof(en)) == -1) 
+	if(setsockopt(_serverSocketFd, SOL_SOCKET, SO_REUSEADDR, &en, sizeof(en)) == -1)
 	//-> set the socket option (SO_REUSEADDR) to reuse the address
 	//el servidor puede volver a hacer bind() al mismo puerto casi inmediatamente.
 		throw(std::runtime_error("faild to set option (SO_REUSEADDR) on socket"));
 	if (fcntl(_serverSocketFd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option
 	//(O_NONBLOCK) for non-blocking socket
 		throw(std::runtime_error("faild to set option (O_NONBLOCK) on socket"));
-	if (bind(_serverSocketFd, (struct sockaddr *)&add, sizeof(add)) == -1) //-> bind 
+	if (bind(_serverSocketFd, (struct sockaddr *)&add, sizeof(add)) == -1) //-> bind
 	//the socket to the address
 		throw(std::runtime_error("faild to bind socket"));
 	if (listen(_serverSocketFd, SOMAXCONN) == -1) //-> listen for incoming connections
@@ -217,7 +220,7 @@ void Server::closeAllFds()
 
 void Server::removeClient(int fd)
 {
-	for (std::vector<pollfd>::size_type i = 0; i < _fds.size(); ++i) 
+	for (std::vector<pollfd>::size_type i = 0; i < _fds.size(); ++i)
 	//-> remove the client from the pollfd
 	{
 		if (_fds[i].fd == fd)
@@ -227,7 +230,7 @@ void Server::removeClient(int fd)
 		}
 	}
 
-	for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i) 
+	for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i)
 	//-> remove the client from the vector of clients
 	{
 		if (_clients[i].getFd() == fd)
@@ -258,6 +261,23 @@ const Client* Server::findClientByFd(int fd) const
 	return 0;
 }
 
+void Server::initCommandHandlers()
+{
+	_commandHandlers["PASS"] = &Server::handlePass;
+	_commandHandlers["NICK"] = &Server::handleNick;
+	_commandHandlers["USER"] = &Server::handleUser;
+	_commandHandlers["QUIT"] = &Server::handleQuit;
+	_commandHandlers["PING"] = &Server::handlePing;
+	_commandHandlers["PONG"] = &Server::handlePong;
+	_commandHandlers["JOIN"] = &Server::handleJoin;
+	_commandHandlers["PART"] = &Server::handlePart;
+	_commandHandlers["PRIVMSG"] = &Server::handlePrivmsg;
+	_commandHandlers["KICK"] = &Server::handleKick;
+	_commandHandlers["INVITE"] = &Server::handleInvite;
+	_commandHandlers["TOPIC"] = &Server::handleTopic;
+	_commandHandlers["MODE"] = &Server::handleMode;
+}
+
 void Server::processClientBuffer(Client& client)
 {
 	std::string message;
@@ -265,8 +285,11 @@ void Server::processClientBuffer(Client& client)
 	while (extractOneMessage(client, message))
 	{
 		std::cout << "Client <" << client.getFd() << "> Message: "
-			<< message << std::endl;
-		//here you have to follow the parsing
+			<< "'" << message << "'" << std::endl;
+
+		CommandParts parts;
+		parseMessage(message, parts);
+		executeCommand(client, parts);
 	}
 }
 
@@ -279,4 +302,32 @@ bool Server::extractOneMessage(Client& client, std::string& message)
 	message = client.getRecvBuffer().substr(0, endPos);
 	client.eraseFromBuffer(endPos + 2);
 	return true;
+}
+
+void Server::executeCommand(Client& client, const CommandParts& parts)
+{
+	if (parts.command.empty())
+		return;
+
+	std::map<std::string, CommandHandler>::iterator it = _commandHandlers.find(parts.command);
+
+	if (it == _commandHandlers.end())
+	{
+		// Placeholder para ERR_UNKNOWNCOMMAND
+		std::cout << "Client <" << client.getFd() << "> sent an unknown command: " << parts.command << std::endl;
+		// sendMessage(client.getFd(), ...);
+		return;
+	}
+
+	if (!client.isRegistered() && !(parts.command == "PASS" || parts.command == "NICK" || parts.command == "USER" || parts.command == "QUIT"))
+	{
+		// Placeholder para ERR_NOTREGISTERED
+		std::cout << "Client <" << client.getFd() << "> is not registered to execute " << parts.command << std::endl;
+		// sendMessage(client.getFd(), ...);
+		return;
+	}
+
+	// Llamar a la función manejadora a través del puntero
+	CommandHandler handler = it->second;
+	(this->*handler)(client, parts.args);
 }

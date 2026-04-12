@@ -1,15 +1,22 @@
 // Server.hpp
 #ifndef SERVER_HPP
 #define SERVER_HPP
-
+#include <map>
 #include "Client.hpp"   // -> clase Client
+#include "Channel.hpp"  // -> clase Channel
 #include <string>       // -> std::string
 #include <vector>       // -> std::vector
 #include <poll.h>       // -> struct pollfd, poll()
 #include <csignal>
 
+class Channel; // Forward-declaration
+
 class Server
 {
+public:
+	// Definición de un tipo para un puntero a una función miembro manejadora de comandos
+	typedef void (Server::*CommandHandler)(Client&, const std::vector<std::string>&);
+
 private:
 	int						_port;
 	std::string				_password;
@@ -17,18 +24,17 @@ private:
 	std::vector<Client>		_clients;
 	std::vector<pollfd>		_fds;
 
+	std::map<std::string, Channel> _channels;
+	std::map<std::string, CommandHandler> _commandHandlers;
+
 	static volatile sig_atomic_t _signal;
 
-
-	public:
 		Server(int port, const std::string& password); // [x]
 		~Server(); // [x]
 
 		void run(); // [x]
 
 		static void signalHandler(int signum); // [x]
-
-	private:
 		void initServerSocket(); // [x]
 		void acceptNewClient(); // [x]
 		void receiveNewData(int fd); // [x]
@@ -37,6 +43,7 @@ private:
 
 		Client* findClientByFd(int fd); // [x]
 		const Client* findClientByFd(int fd) const; // [x]
+		void initCommandHandlers();
 
 	void sendMessage(int fd, const std::string& message);
 	void disconnectClient(int fd, const std::string& reason);
@@ -65,6 +72,7 @@ private:
 	std::vector<std::string> splitIrcMessage(const std::string& message) const;
 	std::string buildWelcomeMessage(const Client& client) const;
 	bool isNicknameInUse(const std::string& nickname) const;
+	void executeCommand(Client& client, const CommandParts& parts);
 };
 
 #endif
