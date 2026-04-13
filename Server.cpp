@@ -294,8 +294,6 @@ void Server::processClientBuffer(Client& client)
 }
 
 
-
-
 bool Server::extractOneMessage(Client& client, std::string& message)
 {
 	std::string::size_type endPos = client.getRecvBuffer().find("\r\n");
@@ -333,6 +331,26 @@ void Server::executeCommand(Client& client, const CommandParts& parts)
 	// Llamar a la función manejadora a través del puntero
 	CommandHandler handler = it->second;
 	(this->*handler)(client, parts.args);
+}
+
+Channel* Server::findChannel(const std::string &name)
+{
+	std::map<std::string, Channel>::iterator it = _channels.find(name);
+	if (it != _channels.end())
+		return &(it->second);
+	return NULL;
+}
+
+Client* Server::findClientByNickname(const std::string &nickname)
+{
+	size_t i = 0;
+	while (i < _clients.size())
+	{
+		if (_clients[i].getNickname() == nickname)
+			return &_clients[i];
+		i++;
+	}
+	return NULL;
 }
 
 void Server::sendMessage(int fd, const std::string& message)

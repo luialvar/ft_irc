@@ -75,6 +75,10 @@ private:
 	std::string buildWelcomeMessage(const Client& client) const;
 	bool isNicknameInUse(const std::string& nickname) const;
 	void executeCommand(Client& client, const CommandParts &parts);
+
+	// Nuevos métodos auxiliares para el comando MODE
+	Channel* findChannel(const std::string &name);
+	Client* findClientByNickname(const std::string &nickname);
 };
 
 #endif
