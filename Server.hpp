@@ -22,6 +22,7 @@ public:
 		void run(); // [x]
 
 		static void signalHandler(int signum); // [x]
+		void sendMessage(int fd, const std::string& message);
 private:
 	int						_port;
 	std::string				_password;
@@ -46,7 +47,6 @@ private:
 		const Client* findClientByFd(int fd) const; // [x]
 		void initCommandHandlers();
 
-	void sendMessage(int fd, const std::string& message);
 	void sendReply(const Client& client, const std::string& message);
 	void disconnectClient(int fd, const std::string& reason);
 

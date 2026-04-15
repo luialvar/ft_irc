@@ -1,4 +1,5 @@
 #include "Channel.hpp"
+#include "Server.hpp"
 
 Channel::Channel(const std::string& name) : _name(name), _topic(""), _userLimit(0)
 {
@@ -20,12 +21,12 @@ const std::string &Channel::getTopic() const
 
 void Channel::setTopic(const std::string &topic)
 {
-	this->_topic = topic;
+	_topic = topic;
 }
 
 void Channel::addClient(Client *client)
 {
-	this->_clients.push_back(client);
+	_clients.push_back(client);
 }
 
 void Channel::removeClient(Client *client)
@@ -62,25 +63,29 @@ void Channel::unsetMode(char mode)
 
 bool Channel::isModeSet(char mode) const
 {
-	return std::find(_modes.begin(), _modes.end(), mode) != _modes.end();
+	return _modes.count(mode) == 1;
+	//return std::find(_modes.begin(), _modes.end(), mode) != _modes.end();
 }
 
 bool Channel::isOperator(Client *client) const
 {
-	return std::find(_operators.begin(), _operators.end(), client) != _operators.end();
+	return _operators.count(client) == 1;
+	//return std::find(_operators.begin(), _operators.end(), client) != _operators.end();
 }
 
 void Channel::addOperator(Client *client)
 {
-	if (!isOperator(client))
-		_operators.push_back(client);
+	_operators.insert(client);
+//	if (!isOperator(client))
+//		_operators.push_back(client);
 }
 
 void Channel::removeOperator(Client *client)
 {
-	std::vector<Client*>::iterator it = std::find(_operators.begin(), _operators.end(), client);
-	if (it != _operators.end())
-		_operators.erase(it);
+	_operators.erase(client);
+//	std::vector<Client*>::iterator it = std::find(_operators.begin(), _operators.end(), client);
+//	if (it != _operators.end())
+//		_operators.erase(it);
 }
 
 void Channel::setKey(const std::string &key)
@@ -130,6 +135,20 @@ void Channel::removeInvite(Client *client)
 
 bool Channel::isInvited(Client *client) const
 {
-	return std::find(_invitedClients.begin(), _invitedClients.end(), client) != _invitedClients.end();
+	return _invitedClients.count(client) == 1;
+	//return std::find(_invitedClients.begin(), _invitedClients.end(), client) != _invitedClients.end();
 }
 
+void Channel::broadcastMessage(const std::string &message, Server &server, Client *sender = NULL)
+{
+	std::vector<Client*>::iterator it;
+
+	it = _clients.begin();
+	while (it != _clients.end())
+	{
+		if (*it != sender)
+			server.sendMessage((*it)->getFd(), message);
+		it++;
+	}
+
+}

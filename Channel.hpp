@@ -7,6 +7,7 @@
 #include <algorithm> // Para std::find en algunas implementaciones
 
 class Client; // Forward-declaration para evitar includes circulares
+class Server;
 
 class Channel
 {
@@ -17,7 +18,7 @@ private:
 	std::set<char>		_modes; // Almacena los caracteres de los modos activos (ej: 'i', 't', 'k', 'o', 'l')
 	std::string			_key; // Contraseña para el modo +k
 	size_t				_userLimit; // Límite de usuarios para el modo +l (0 significa sin límite)
-	std::vector<Client*> _operators; // Clientes con el modo +o (operadores del canal)
+	std::set<Client*> _operators; // Clientes con el modo +o (operadores del canal)
 	std::set<Client*>	_invitedClients; // Clientes invitados a un canal +i (invite-only)
 	std::vector<std::string> _bannedMasks; // Máscaras de baneo para el modo +b
 
@@ -64,7 +65,7 @@ public:
 	bool isInvited(Client* client) const;
 
 	// Utilidad para enviar mensajes a todos los miembros del canal
-	void broadcastMessage(const std::string& message, Client* sender = NULL);
+	void broadcastMessage(const std::string& message, Server &server, Client* sender = NULL);
 };
 
 #endif
