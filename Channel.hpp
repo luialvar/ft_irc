@@ -63,11 +63,6 @@ public:
 	void removeInvite(Client* client);
 	bool isInvited(Client* client) const;
 
-	// Gestión de baneos (+b)
-	void addBan(const std::string& mask);
-	void removeBan(const std::string& mask);
-	bool isBanned(Client* client) const; // Requiere el nick/host del cliente para comparar con la máscara
-
 	// Utilidad para enviar mensajes a todos los miembros del canal
 	void broadcastMessage(const std::string& message, Client* sender = NULL);
 };

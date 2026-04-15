@@ -103,3 +103,33 @@ const std::string &Channel::getKey() const
 	return _key;
 }
 
+void Channel::setUserLimit(size_t limit)
+{
+	_userLimit = limit;
+}
+
+void Channel::removeUserLimit()
+{
+	_userLimit = 0;
+}
+
+size_t Channel::getUserLimit() const
+{
+	return _userLimit;
+}
+
+void Channel::addInvite(Client *client)
+{
+	_invitedClients.insert(client);
+}
+
+void Channel::removeInvite(Client *client)
+{
+	_invitedClients.erase(client);
+}
+
+bool Channel::isInvited(Client *client) const
+{
+	return std::find(_invitedClients.begin(), _invitedClients.end(), client) != _invitedClients.end();
+}
+
