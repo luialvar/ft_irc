@@ -5,9 +5,10 @@
 #include <vector>
 #include <set> // Para almacenar modos y clientes invitados de forma eficiente
 #include <algorithm> // Para std::find en algunas implementaciones
+#include <sstream>
+#include "Server.hpp"
 
 class Client; // Forward-declaration para evitar includes circulares
-class Server;
 
 class Channel
 {
@@ -64,6 +65,7 @@ public:
 	void removeInvite(Client* client);
 	bool isInvited(Client* client) const;
 
+	std::string getUserListString() const;
 	// Utilidad para enviar mensajes a todos los miembros del canal
 	void broadcastMessage(const std::string& message, Server &server, Client* sender = NULL);
 };

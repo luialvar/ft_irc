@@ -1,5 +1,5 @@
 #include "Channel.hpp"
-#include "Server.hpp"
+
 
 Channel::Channel(const std::string& name) : _name(name), _topic(""), _userLimit(0)
 {
@@ -65,6 +65,40 @@ bool Channel::isModeSet(char mode) const
 {
 	return _modes.count(mode) == 1;
 	//return std::find(_modes.begin(), _modes.end(), mode) != _modes.end();
+}
+
+std::string Channel::getModeString() const
+{
+	std::string s_mode;
+	std::string s_params;
+	std::set<char>::iterator it;
+
+	it = _modes.begin();
+	s_mode.clear();
+	s_params.clear();
+	s_mode = "+";
+	while (it != _modes.end())
+	{
+		s_mode += (*it);
+		it++;
+	}
+	if (isModeSet('k'))
+	{
+		s_params += " ";
+		s_params += getKey();
+	}
+	if (getUserLimit() > 0 && isModeSet('l'))
+	{
+		std::stringstream ss;
+		ss << getUserLimit();
+		s_params += " ";
+		s_params += ss.str();
+	}
+	if (!s_params.empty())
+	{
+		s_mode += s_params;
+	}
+	return s_mode;
 }
 
 bool Channel::isOperator(Client *client) const
@@ -139,6 +173,25 @@ bool Channel::isInvited(Client *client) const
 	//return std::find(_invitedClients.begin(), _invitedClients.end(), client) != _invitedClients.end();
 }
 
+std::string Channel::getUserListString() const
+{
+	std::string listUser;
+	std::vector<Client*>::const_iterator it;
+
+	listUser.clear();
+	it = _clients.begin();
+	while (it != _clients.end())
+	{
+		if (!listUser.empty())
+			listUser += " ";
+		if (isOperator(*it))
+			listUser += "@";
+		listUser += (*it)->getNickname();
+		it++;
+	}
+	return listUser;
+}
+
 void Channel::broadcastMessage(const std::string &message, Server &server, Client *sender = NULL)
 {
 	std::vector<Client*>::iterator it;
@@ -150,5 +203,4 @@ void Channel::broadcastMessage(const std::string &message, Server &server, Clien
 			server.sendMessage((*it)->getFd(), message);
 		it++;
 	}
-
 }
