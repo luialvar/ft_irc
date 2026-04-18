@@ -2,6 +2,7 @@
 #include "Server.hpp"     // -> declaración de la clase Server
 #include "includes/ft_irc.hpp"
 #include "includes/parser.hpp"
+#include "ModeCommand.hpp"
 
 #include <iostream>       // -> std::cout, std::cerr
 #include <stdexcept>      // -> std::runtime_error, std::exception
@@ -437,6 +438,14 @@ void Server::handleTopic(Client& client, const std::vector<std::string>& tokens)
 }
 void Server::handleMode(Client& client, const std::vector<std::string>& tokens)
 {
-	(void) tokens;
-	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+	if (tokens.empty())
+	{
+		sendReply(client, "461 " + client.getNickname() + "MODE :Not enough parameters");
+		return;
+	}
+	if (tokens[0][0] == '#')
+	{
+		ModeCommand cmd(*this, client, tokens);
+		cmd.execute();
+	}
 }
