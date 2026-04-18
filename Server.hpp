@@ -23,6 +23,9 @@ public:
 
 		static void signalHandler(int signum); // [x]
 		void sendMessage(int fd, const std::string& message);
+		// Nuevos métodos auxiliares para el comando MODE
+	Channel* findChannel(const std::string &name);
+	Client* findClientByNickname(const std::string &nickname);
 private:
 	int						_port;
 	std::string				_password;
@@ -76,9 +79,7 @@ private:
 	bool isNicknameInUse(const std::string& nickname) const;
 	void executeCommand(Client& client, const CommandParts &parts);
 
-	// Nuevos métodos auxiliares para el comando MODE
-	Channel* findChannel(const std::string &name);
-	Client* findClientByNickname(const std::string &nickname);
+
 };
 
 #endif
