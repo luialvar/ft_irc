@@ -1,8 +1,10 @@
 #include "ModeCommand.hpp"
+#include <sstream>
 
 const std::string MODES = "itkol";
 
-ModeCommand::ModeCommand(Server &server, Client &client, const std::vector<std::string> &args):_server(server), _client(client), _args(args), _targetChannel(NULL), _addingMode(true)
+ModeCommand::ModeCommand(Server &server, Client &client, const std::vector<std::string> &args)
+:_server(server), _client(client), _args(args), _targetChannel(NULL), _addingMode(true), _modeSuccesful(""), _paramsSuccesful("")
 {}
 
 void ModeCommand::execute()
@@ -19,7 +21,7 @@ void ModeCommand::execute()
 
 bool	isValidChar(char c)
 {
-	return MODES.find(c);
+	return MODES.find(c) != std::string::npos;
 }
 
 bool	modeNeedsParam(char c, char sign)
@@ -37,11 +39,14 @@ bool	ModeCommand::_parse()
 		//llamada a funcion error ERR_NEEDMOREPARAMS
 		return false;
 	}
-	if (_server.findChannel(_args[0]) == NULL)
+
+	_targetChannel = _server.findChannel(_args[0]);
+	if (_targetChannel == NULL)
 	{
 		//llamada a funcion error ERR_NOSUCHCHANNEL
 		return false;
 	}
+
 	if (_args.size() == 1)
 	{
 		_handleModeRequest();
@@ -91,4 +96,109 @@ bool	ModeCommand::_parse()
 		it_modes++;
 	}
 	return true;
+}
+
+bool	ModeCommand::_checkPermissions()
+{
+	if (_targetChannel->isOperator(&_client))
+		return true;
+	else
+	{
+		//llamar a la funcion error ERROR ERR_CHANOPRIVSNEEDED
+		return false;
+	}
+}
+
+void	ModeCommand::_applyChanges()
+{
+	std::string::iterator	it_modes = _modeChanges.begin();
+	size_t	idx_param = 0;
+
+	while (it_modes != _modeChanges.end())
+	{
+		char c = (*it_modes);
+		switch (c)
+		{
+		case 'i':
+			if (_addingMode)
+				_targetChannel->setMode(c);
+			else
+				_targetChannel->unsetMode(c);
+			break;
+		case 't':
+			if (_addingMode)
+				_targetChannel->setMode(c);
+			else
+				_targetChannel->unsetMode(c);
+			break;
+		case 'k':
+			if (_addingMode)
+			{
+				std::string key = _modeParams[idx_param];
+				if (_targetChannel->getKey().empty())
+				{
+					_targetChannel->setKey(key);
+					_targetChannel->setMode(c);
+				}
+				idx_param++;
+			}
+			else
+			{
+				_targetChannel->removeKey();
+				_targetChannel->unsetMode(c);
+			}
+			break;
+		case 'o':
+			Client *client = _server.findClientByNickname(_modeParams[idx_param]);
+			if (client)
+			{
+				if (_targetChannel->hasClient(client))
+				{
+					if (_addingMode)
+						_targetChannel->addOperator(client);
+					else
+						_targetChannel->removeOperator(client);
+				}
+				else
+				{
+					//error ERR_USERNOTINCHANNEL
+				}
+			}
+			else
+			{
+				//error ERR_NOSUCHNICK
+			}
+			idx_param++;
+			break;
+		case 'l':
+			if (_addingMode)
+			{
+				std::string limit = _modeParams[idx_param];
+				std::stringstream ss(limit);
+				size_t l;
+				if ((ss >> l) && ss.eof() && l > 0)
+				{
+					_targetChannel->setUserLimit(l);
+					_targetChannel->setMode(c);
+				}
+				idx_param++;
+			}
+			else
+			{
+				_targetChannel->removeUserLimit();
+				_targetChannel->unsetMode(c);
+			}
+			break;
+		case '+':
+			_addingMode = true;
+			break;
+		case '-':
+			_addingMode = false;
+			break;
+		default:
+			//llamar a la funcion error ERROR 472
+			break;
+		}
+		it_modes++;
+	}
 }

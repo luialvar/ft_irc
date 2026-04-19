@@ -14,6 +14,8 @@ private:
 	bool	_addingMode;
 	std::string	_modeChanges;
 	std::vector<std::string>	_modeParams;
+	std::string _modeSuccesful;
+	std::string _paramsSuccesful;
 
 public:
 	ModeCommand(Server &server, Client &client, const std::vector<std::string> &args);
