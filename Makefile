@@ -5,7 +5,7 @@ CXX := c++
 CXXFLAGS := -Wall -Wextra -Werror -std=c++98
 
 # Server sources
-SRCS := main.cpp Server.cpp Client.cpp Channel.cpp parser.cpp
+SRCS := main.cpp Server.cpp Client.cpp Channel.cpp parser.cpp ModeCommand.cpp
 OBJS := $(SRCS:.cpp=.o)
 
 # Test sources

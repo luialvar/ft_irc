@@ -7,6 +7,8 @@ ModeCommand::ModeCommand(Server &server, Client &client, const std::vector<std::
 :_server(server), _client(client), _args(args), _targetChannel(NULL), _addingMode(true), _modeSuccesful(""), _paramsSuccesful("")
 {}
 
+ModeCommand::~ModeCommand(){}
+
 void ModeCommand::execute()
 {
 	if (!_parse())
@@ -113,6 +115,7 @@ void	ModeCommand::_applyChanges()
 {
 	std::string::iterator	it_modes = _modeChanges.begin();
 	size_t	idx_param = 0;
+	Client *client;
 
 	while (it_modes != _modeChanges.end())
 	{
@@ -149,7 +152,7 @@ void	ModeCommand::_applyChanges()
 			}
 			break;
 		case 'o':
-			Client *client = _server.findClientByNickname(_modeParams[idx_param]);
+			client = _server.findClientByNickname(_modeParams[idx_param]);
 			if (client)
 			{
 				if (_targetChannel->hasClient(client))
@@ -202,3 +205,9 @@ void	ModeCommand::_applyChanges()
 		it_modes++;
 	}
 }
+
+void ModeCommand::_broadcastChanges()
+{}
+
+void ModeCommand::_handleModeRequest()
+{}

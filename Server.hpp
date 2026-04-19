@@ -9,7 +9,6 @@
 #include <poll.h>       // -> struct pollfd, poll()
 #include <csignal>
 #include "./includes/ft_irc.hpp"
-class Channel; // Forward-declaration
 
 class Server
 {

@@ -1,4 +1,5 @@
 #include "Channel.hpp"
+#include "Server.hpp"
 
 
 Channel::Channel(const std::string& name) : _name(name), _topic(""), _userLimit(0)
@@ -192,7 +193,7 @@ std::string Channel::getUserListString() const
 	return listUser;
 }
 
-void Channel::broadcastMessage(const std::string &message, Server &server, Client *sender = NULL)
+void Channel::broadcastMessage(const std::string &message, Server &server, Client *sender)
 {
 	std::vector<Client*>::iterator it;
 

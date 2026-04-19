@@ -6,9 +6,9 @@
 #include <set> // Para almacenar modos y clientes invitados de forma eficiente
 #include <algorithm> // Para std::find en algunas implementaciones
 #include <sstream>
-#include "Server.hpp"
 
 class Client; // Forward-declaration para evitar includes circulares
+class Server;
 
 class Channel
 {
