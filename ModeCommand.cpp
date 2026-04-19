@@ -116,9 +116,11 @@ void	ModeCommand::_applyChanges()
 	std::string::iterator	it_modes = _modeChanges.begin();
 	size_t	idx_param = 0;
 	Client *client;
+	char currentSing = _addingMode ? '+' : '-';
 
 	while (it_modes != _modeChanges.end())
 	{
+		char lastSign = 0;
 		char c = (*it_modes);
 		switch (c)
 		{
@@ -127,12 +129,24 @@ void	ModeCommand::_applyChanges()
 				_targetChannel->setMode(c);
 			else
 				_targetChannel->unsetMode(c);
+			if (currentSing != lastSign)
+				{
+					_modeChanges +=currentSing;
+					lastSign = currentSing;
+				}
+				_modeChanges += c;
 			break;
 		case 't':
 			if (_addingMode)
 				_targetChannel->setMode(c);
 			else
 				_targetChannel->unsetMode(c);
+			if (currentSing != lastSign)
+				{
+					_modeChanges +=currentSing;
+					lastSign = currentSing;
+				}
+				_modeChanges += c;
 			break;
 		case 'k':
 			if (_addingMode)
@@ -142,6 +156,13 @@ void	ModeCommand::_applyChanges()
 				{
 					_targetChannel->setKey(key);
 					_targetChannel->setMode(c);
+					if (currentSing != lastSign)
+					{
+						_modeChanges +=currentSing;
+						lastSign = currentSing;
+					}
+					_modeChanges += c;
+					_paramsSuccesful += " " + key;
 				}
 				idx_param++;
 			}
@@ -149,6 +170,12 @@ void	ModeCommand::_applyChanges()
 			{
 				_targetChannel->removeKey();
 				_targetChannel->unsetMode(c);
+				if (currentSing != lastSign)
+				{
+					_modeChanges +=currentSing;
+					lastSign = currentSing;
+				}
+				_modeChanges += c;
 			}
 			break;
 		case 'o':
@@ -161,6 +188,13 @@ void	ModeCommand::_applyChanges()
 						_targetChannel->addOperator(client);
 					else
 						_targetChannel->removeOperator(client);
+					if (currentSing != lastSign)
+					{
+						_modeChanges +=currentSing;
+						lastSign = currentSing;
+					}
+					_modeChanges += c;
+					_paramsSuccesful += " " + _modeParams[idx_param];
 				}
 				else
 				{
@@ -183,6 +217,13 @@ void	ModeCommand::_applyChanges()
 				{
 					_targetChannel->setUserLimit(l);
 					_targetChannel->setMode(c);
+					if (currentSing != lastSign)
+					{
+						_modeChanges +=currentSing;
+						lastSign = currentSing;
+					}
+					_modeChanges += c;
+					_paramsSuccesful += " " + l;
 				}
 				idx_param++;
 			}
@@ -190,13 +231,21 @@ void	ModeCommand::_applyChanges()
 			{
 				_targetChannel->removeUserLimit();
 				_targetChannel->unsetMode(c);
+				if (currentSing != lastSign)
+				{
+					_modeChanges +=currentSing;
+					lastSign = currentSing;
+				}
+				_modeChanges += c;
 			}
 			break;
 		case '+':
 			_addingMode = true;
+			currentSing = c;
 			break;
 		case '-':
 			_addingMode = false;
+			currentSing = c;
 			break;
 		default:
 			//llamar a la funcion error ERROR 472
@@ -207,7 +256,14 @@ void	ModeCommand::_applyChanges()
 }
 
 void ModeCommand::_broadcastChanges()
-{}
+{
+	if (!_modeSuccesful.empty())
+	{
+		std::string prefix = ":" + _client.getNickname() + "!" + _client.getUsername() + "@" + _client.getIp();
+		std::string message = prefix + " MODE " + _targetChannel->getName() + " " + _modeSuccesful + _paramsSuccesful;
+		_targetChannel->broadcastMessage(message, _server, NULL);
+	}
+}
 
 void ModeCommand::_handleModeRequest()
 {}
