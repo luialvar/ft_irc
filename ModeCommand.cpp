@@ -130,11 +130,11 @@ void	ModeCommand::_applyChanges()
 			else
 				_targetChannel->unsetMode(c);
 			if (currentSing != lastSign)
-				{
-					_modeChanges +=currentSing;
-					lastSign = currentSing;
-				}
-				_modeChanges += c;
+			{
+				_modeChanges +=currentSing;
+				lastSign = currentSing;
+			}
+			_modeChanges += c;
 			break;
 		case 't':
 			if (_addingMode)
@@ -266,4 +266,15 @@ void ModeCommand::_broadcastChanges()
 }
 
 void ModeCommand::_handleModeRequest()
-{}
+{
+	std::string nick;
+	std::string nameChannel;
+	std::string modeAndParams;
+	std::string message;
+
+	nick = _client.getNickname();
+	nameChannel = _targetChannel->getName();
+	modeAndParams = _targetChannel->getModeString();
+	message = "324 " + nick + " " + nameChannel + " " + modeAndParams;
+	_server.sendReply(_client, message);
+}

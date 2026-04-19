@@ -25,6 +25,7 @@ public:
 		// Nuevos métodos auxiliares para el comando MODE
 	Channel* findChannel(const std::string &name);
 	Client* findClientByNickname(const std::string &nickname);
+	void sendReply(const Client& client, const std::string& message);
 private:
 	int						_port;
 	std::string				_password;
@@ -49,7 +50,7 @@ private:
 		const Client* findClientByFd(int fd) const; // [x]
 		void initCommandHandlers();
 
-	void sendReply(const Client& client, const std::string& message);
+
 	void disconnectClient(int fd, const std::string& reason);
 
 		void processClientBuffer(Client& client); // [x]
