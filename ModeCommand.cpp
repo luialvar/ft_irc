@@ -21,12 +21,12 @@ void ModeCommand::execute()
 	_broadcastChanges();
 }
 
-bool	isValidChar(char c)
+static bool	isValidChar(char c)
 {
 	return MODES.find(c) != std::string::npos;
 }
 
-bool	modeNeedsParam(char c, char sign)
+static bool	modeNeedsParam(char c, char sign)
 {
 	return (c == 'o' || (c == 'k' && sign == '+') || (c == 'l' && sign == '+'));
 }
@@ -39,6 +39,7 @@ bool	ModeCommand::_parse()
 	if (_args.empty())
 	{
 		//llamada a funcion error ERR_NEEDMOREPARAMS
+		_server.sendReply(_client, formatError(461, _client.getNickname(), "MODE", ""));
 		return false;
 	}
 
@@ -46,6 +47,7 @@ bool	ModeCommand::_parse()
 	if (_targetChannel == NULL)
 	{
 		//llamada a funcion error ERR_NOSUCHCHANNEL
+		_server.sendReply(_client, formatError(403, _client.getNickname(), _args[0], ""));
 		return false;
 	}
 
@@ -93,6 +95,7 @@ bool	ModeCommand::_parse()
 			else
 			{
 				//llamar a la funcion error ERROR 472
+				_server.sendReply(_client, formatError(472, _client.getNickname(), std::string(1, c), _args[0]));
 			}
 		}
 		it_modes++;
@@ -107,8 +110,26 @@ bool	ModeCommand::_checkPermissions()
 	else
 	{
 		//llamar a la funcion error ERROR ERR_CHANOPRIVSNEEDED
+		_server.sendReply(_client, formatError(482, _client.getNickname(), _args[0], ""));
 		return false;
 	}
+}
+
+static	void insertSign(char &currentSing, char &lastSign, std::string &succes)
+{
+	if (currentSing != lastSign)
+	{
+		succes +=currentSing;
+		lastSign = currentSing;
+	}
+}
+
+static	void modeWithOutParams(bool add, Channel *cha, char c)
+{
+	if (add)
+		cha->setMode(c);
+	else
+		cha->unsetMode(c);
 }
 
 void	ModeCommand::_applyChanges()
@@ -117,36 +138,22 @@ void	ModeCommand::_applyChanges()
 	size_t	idx_param = 0;
 	Client *client;
 	char currentSing = _addingMode ? '+' : '-';
+	char lastSign = 0;
 
 	while (it_modes != _modeChanges.end())
 	{
-		char lastSign = 0;
 		char c = (*it_modes);
 		switch (c)
 		{
 		case 'i':
-			if (_addingMode)
-				_targetChannel->setMode(c);
-			else
-				_targetChannel->unsetMode(c);
-			if (currentSing != lastSign)
-			{
-				_modeChanges +=currentSing;
-				lastSign = currentSing;
-			}
-			_modeChanges += c;
+			modeWithOutParams(_addingMode, _targetChannel, c);
+			insertSign(currentSing, lastSign, _modeSuccesful);
+			_modeSuccesful += c;
 			break;
 		case 't':
-			if (_addingMode)
-				_targetChannel->setMode(c);
-			else
-				_targetChannel->unsetMode(c);
-			if (currentSing != lastSign)
-				{
-					_modeChanges +=currentSing;
-					lastSign = currentSing;
-				}
-				_modeChanges += c;
+			modeWithOutParams(_addingMode, _targetChannel, c);
+			insertSign(currentSing, lastSign, _modeSuccesful);
+			_modeSuccesful += c;
 			break;
 		case 'k':
 			if (_addingMode)
@@ -156,12 +163,8 @@ void	ModeCommand::_applyChanges()
 				{
 					_targetChannel->setKey(key);
 					_targetChannel->setMode(c);
-					if (currentSing != lastSign)
-					{
-						_modeChanges +=currentSing;
-						lastSign = currentSing;
-					}
-					_modeChanges += c;
+					insertSign(currentSing, lastSign, _modeSuccesful);
+					_modeSuccesful += c;
 					_paramsSuccesful += " " + key;
 				}
 				idx_param++;
@@ -170,40 +173,25 @@ void	ModeCommand::_applyChanges()
 			{
 				_targetChannel->removeKey();
 				_targetChannel->unsetMode(c);
-				if (currentSing != lastSign)
-				{
-					_modeChanges +=currentSing;
-					lastSign = currentSing;
-				}
-				_modeChanges += c;
+				insertSign(currentSing, lastSign, _modeSuccesful);
+				_modeSuccesful += c;
 			}
 			break;
 		case 'o':
 			client = _server.findClientByNickname(_modeParams[idx_param]);
-			if (client)
-			{
-				if (_targetChannel->hasClient(client))
-				{
-					if (_addingMode)
-						_targetChannel->addOperator(client);
-					else
-						_targetChannel->removeOperator(client);
-					if (currentSing != lastSign)
-					{
-						_modeChanges +=currentSing;
-						lastSign = currentSing;
-					}
-					_modeChanges += c;
-					_paramsSuccesful += " " + _modeParams[idx_param];
-				}
-				else
-				{
-					//error ERR_USERNOTINCHANNEL
-				}
-			}
+			if (!client)
+				_server.sendReply(_client, formatError(401, _client.getNickname(), _modeParams[idx_param], "")); // ERR_NOSUCHNICK
+			else if (!_targetChannel->hasClient(client))
+				_server.sendReply(_client, formatError(441, _client.getNickname(), _modeParams[idx_param], _args[0])); // ERR_USERNOTINCHANNEL
 			else
 			{
-				//error ERR_NOSUCHNICK
+				if (_addingMode)
+					_targetChannel->addOperator(client);
+				else
+					_targetChannel->removeOperator(client);
+				insertSign(currentSing, lastSign, _modeSuccesful);
+				_modeSuccesful += c;
+				_paramsSuccesful += " " + _modeParams[idx_param];
 			}
 			idx_param++;
 			break;
@@ -217,13 +205,11 @@ void	ModeCommand::_applyChanges()
 				{
 					_targetChannel->setUserLimit(l);
 					_targetChannel->setMode(c);
-					if (currentSing != lastSign)
-					{
-						_modeChanges +=currentSing;
-						lastSign = currentSing;
-					}
-					_modeChanges += c;
-					_paramsSuccesful += " " + l;
+					insertSign(currentSing, lastSign, _modeSuccesful);
+					_modeSuccesful += c;
+					_paramsSuccesful += " ";
+					_paramsSuccesful += ss.str();
+
 				}
 				idx_param++;
 			}
@@ -231,12 +217,8 @@ void	ModeCommand::_applyChanges()
 			{
 				_targetChannel->removeUserLimit();
 				_targetChannel->unsetMode(c);
-				if (currentSing != lastSign)
-				{
-					_modeChanges +=currentSing;
-					lastSign = currentSing;
-				}
-				_modeChanges += c;
+				insertSign(currentSing, lastSign, _modeSuccesful);
+				_modeSuccesful += c;
 			}
 			break;
 		case '+':
@@ -249,6 +231,7 @@ void	ModeCommand::_applyChanges()
 			break;
 		default:
 			//llamar a la funcion error ERROR 472
+			_server.sendReply(_client, formatError(472, _client.getNickname(), std::string(1, c), _args[0]));
 			break;
 		}
 		it_modes++;
@@ -277,4 +260,35 @@ void ModeCommand::_handleModeRequest()
 	modeAndParams = _targetChannel->getModeString();
 	message = "324 " + nick + " " + nameChannel + " " + modeAndParams;
 	_server.sendReply(_client, message);
+}
+
+static std::string formatError(int code, const std::string& nick, const std::string& arg1, const std::string& arg2) {
+    std::stringstream ss;
+
+    ss << code << " " << nick << " ";
+
+    switch (code) {
+		case 401://error ERR_NOSUCHNICK
+    		ss << arg1 << " :No such nick/channel";
+    		break;
+        case 403: // ERR_NOSUCHCHANNEL
+            ss << arg1 << " :No such channel";
+            break;
+        case 441: // ERR_USERNOTINCHANNEL
+            ss << arg1 << " " << arg2 << " :They aren't on that channel";
+            break;
+        case 461: // ERR_NEEDMOREPARAMS
+            ss << arg1 << " :Not enough parameters";
+            break;
+        case 472: // ERR_UNKNOWNMODE
+            ss << arg1 << " :is unknown mode char to me for " << arg2;
+            break;
+        case 482: // ERR_CHANOPRIVSNEEDED
+            ss << arg1 << " :You're not channel operator";
+            break;
+        default:
+            ss << ":Unknown error";
+            break;
+    }
+    return ss.str();
 }

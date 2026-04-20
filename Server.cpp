@@ -433,6 +433,7 @@ void Server::handleMode(Client& client, const std::vector<std::string>& tokens)
 		cmd.execute();
 	}
 }
+
 static std::string serverName()
 {
     return "ircserv";
