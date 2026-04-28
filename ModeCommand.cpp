@@ -3,6 +3,37 @@
 
 const std::string MODES = "itkol";
 
+static std::string formatError(int code, const std::string& nick, const std::string& arg1, const std::string& arg2) {
+    std::stringstream ss;
+
+    ss << code << " " << nick << " ";
+
+    switch (code) {
+		case 401://error ERR_NOSUCHNICK
+    		ss << arg1 << " :No such nick/channel";
+    		break;
+        case 403: // ERR_NOSUCHCHANNEL
+            ss << arg1 << " :No such channel";
+            break;
+        case 441: // ERR_USERNOTINCHANNEL
+            ss << arg1 << " " << arg2 << " :They aren't on that channel";
+            break;
+        case 461: // ERR_NEEDMOREPARAMS
+            ss << arg1 << " :Not enough parameters";
+            break;
+        case 472: // ERR_UNKNOWNMODE
+            ss << arg1 << " :is unknown mode char to me for " << arg2;
+            break;
+        case 482: // ERR_CHANOPRIVSNEEDED
+            ss << arg1 << " :You're not channel operator";
+            break;
+        default:
+            ss << ":Unknown error";
+            break;
+    }
+    return ss.str();
+}
+
 ModeCommand::ModeCommand(Server &server, Client &client, const std::vector<std::string> &args)
 :_server(server), _client(client), _args(args), _targetChannel(NULL), _addingMode(true), _modeSuccesful(""), _paramsSuccesful("")
 {}
@@ -262,33 +293,4 @@ void ModeCommand::_handleModeRequest()
 	_server.sendReply(_client, message);
 }
 
-static std::string formatError(int code, const std::string& nick, const std::string& arg1, const std::string& arg2) {
-    std::stringstream ss;
 
-    ss << code << " " << nick << " ";
-
-    switch (code) {
-		case 401://error ERR_NOSUCHNICK
-    		ss << arg1 << " :No such nick/channel";
-    		break;
-        case 403: // ERR_NOSUCHCHANNEL
-            ss << arg1 << " :No such channel";
-            break;
-        case 441: // ERR_USERNOTINCHANNEL
-            ss << arg1 << " " << arg2 << " :They aren't on that channel";
-            break;
-        case 461: // ERR_NEEDMOREPARAMS
-            ss << arg1 << " :Not enough parameters";
-            break;
-        case 472: // ERR_UNKNOWNMODE
-            ss << arg1 << " :is unknown mode char to me for " << arg2;
-            break;
-        case 482: // ERR_CHANOPRIVSNEEDED
-            ss << arg1 << " :You're not channel operator";
-            break;
-        default:
-            ss << ":Unknown error";
-            break;
-    }
-    return ss.str();
-}
