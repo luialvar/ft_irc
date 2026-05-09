@@ -3,6 +3,7 @@
 #include "includes/ft_irc.hpp"
 #include "includes/parser.hpp"
 #include "ModeCommand.hpp"
+#include "JoinCommand.hpp"
 
 #include <iostream>       // -> std::cout, std::cerr
 #include <stdexcept>      // -> std::runtime_error, std::exception
@@ -392,8 +393,8 @@ void Server::handleQuit(Client& client, const std::vector<std::string>& tokens)
 }
 void Server::handleJoin(Client& client, const std::vector<std::string>& tokens)
 {
-	(void) tokens;
-	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+	JoinCommand cmd(*this, client, tokens);
+	cmd.execute();
 }
 void Server::handlePart(Client& client, const std::vector<std::string>& tokens)
 {

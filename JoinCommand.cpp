@@ -3,10 +3,11 @@
 #include <sstream>
 
 static std::string formatError(int code, const std::string& nick, const std::string& arg1, const std::string& arg2) {
-    
+
 	std::stringstream ss;
     ss << code << " " << nick << " ";
 
+	(void)arg2;
     switch (code) {
         case 403: // ERR_NOSUCHCHANNEL
             ss << arg1 << " :No such channel";
@@ -46,13 +47,19 @@ JoinCommand::~JoinCommand(){}
 
 void JoinCommand::execute()
 {
+	if (_args.empty())
+	{
+		_server.sendReply(_client, formatError(461, _client.getNickname(), "JOIN", ""));
+		return ;
+	}
 	_channels = split(_args[0], ',');
-	_keys = split(_args[1], ',');
-	for(int i = 0; i < _channels.size(); i++)
+	if (_args.size() > 1)
+		_keys = split(_args[1], ',');
+	for(int i = 0; i < (int)_channels.size(); i++)
 	{
 		if (!parse(_channels[i]))
 			return;
-		if (!checkModesAndConditions(_keys[i]))
+		if ((!_channels.empty()) && !checkModesAndConditions(_keys[i]))
 			return;
 		_channel->addClient(&_client);
 	}
@@ -89,6 +96,8 @@ bool	JoinCommand::parse(std::string _channel_it)
 		_server.sendReply(_client, formatError(443, _client.getNickname(), _channel_it, _channel->getName()));
 		return false;
 	}
+
+	return true;
 }
 
 bool	JoinCommand::checkModesAndConditions(std::string _key_it)
@@ -119,6 +128,7 @@ bool	JoinCommand::checkModesAndConditions(std::string _key_it)
 
 void	JoinCommand::createAndJoin()
 {
+	//create channel
 	_channel->addClient(&_client);
 	_channel->addOperator(&_client);
 	_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _args[1]);
