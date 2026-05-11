@@ -3,10 +3,11 @@
 #include <sstream>
 
 static std::string formatError(int code, const std::string& nick, const std::string& arg1, const std::string& arg2) {
-    
+
 	std::stringstream ss;
     ss << code << " " << nick << " ";
 
+	(void)arg2;
     switch (code) {
         case 403: // ERR_NOSUCHCHANNEL
             ss << arg1 << " :No such channel";
@@ -52,16 +53,22 @@ void JoinCommand::execute()
 		_server.sendReply(_client, formatError(461, _client.getNickname(), "JOIN", ""));
 		return;
 	}
+	if (_args.empty())
+	{
+		_server.sendReply(_client, formatError(461, _client.getNickname(), "JOIN", ""));
+		return ;
+	}
 	_channels = split(_args[0], ',');
-	_keys = split(_args[1], ',');
+	if (_args.size() > 1)
+		_keys = split(_args[1], ',');
 	std::string	_aux_key = "";
-	for(int i = 0; i < _channels.size(); i++)
+	for(int i = 0; i < (int)_channels.size(); i++)
 	{
 		if (!parse(_channels[i]))
 			return;
 		if (!_keys.empty())
 			_aux_key = _keys[i];
-		if (!checkModesAndConditions(_aux_key))
+		if ((!_channels.empty()) && !checkModesAndConditions(_aux_key))
 			return;
 		_channel->addClient(&_client);
 		_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _channel->getName());
@@ -91,6 +98,8 @@ bool	JoinCommand::parse(std::string _channel_it)
 		_server.sendReply(_client, formatError(443, _client.getNickname(), _channel_it, _channel->getName()));
 		return false;
 	}
+	return true;
+
 	return true;
 }
 
@@ -123,6 +132,7 @@ bool	JoinCommand::checkModesAndConditions(std::string _key_it)
 void	JoinCommand::createAndJoin(std::string _channelName)
 {
 	_channel = new Channel(_channelName);
+	//create channel
 	_channel->addClient(&_client);
 	_channel->addOperator(&_client);
 	_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _channel->getName());
