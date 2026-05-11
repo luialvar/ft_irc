@@ -17,7 +17,7 @@ class JoinCommand
 
 		bool	parse(std::string _channel_it);
 		bool	checkModesAndConditions(std::string _key_it);
-		void	createAndJoin();
+		void	createAndJoin(std::string _channelName);
 
 	public:
 		JoinCommand(Server &server, Client &client, const std::vector<std::string> &args);

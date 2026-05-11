@@ -46,28 +46,30 @@ JoinCommand::~JoinCommand(){}
 
 void JoinCommand::execute()
 {
+	if (_args.empty())
+	{
+		//llamada a funcion error ERR_NEEDMOREPARAMS
+		_server.sendReply(_client, formatError(461, _client.getNickname(), "JOIN", ""));
+		return;
+	}
 	_channels = split(_args[0], ',');
 	_keys = split(_args[1], ',');
+	std::string	_aux_key = "";
 	for(int i = 0; i < _channels.size(); i++)
 	{
 		if (!parse(_channels[i]))
 			return;
-		if (!checkModesAndConditions(_keys[i]))
+		if (!_keys.empty())
+			_aux_key = _keys[i];
+		if (!checkModesAndConditions(_aux_key))
 			return;
 		_channel->addClient(&_client);
+		_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _channel->getName());
 	}
 }
 
 bool	JoinCommand::parse(std::string _channel_it)
 {
-
-	if (_args.empty())
-	{
-		//llamada a funcion error ERR_NEEDMOREPARAMS
-		_server.sendReply(_client, formatError(461, _client.getNickname(), "JOIN", ""));
-		return false;
-	}
-
 	if (_args[0][0] != '#')
 	{
 		//llamada a funcion error ERR_BADCHANMASK
@@ -80,7 +82,7 @@ bool	JoinCommand::parse(std::string _channel_it)
 	{
 		//llamada a funcion error ERR_NOSUCHCHANNEL
 		_server.sendReply(_client, formatError(403, _client.getNickname(), _channel_it, ""));
-		createAndJoin();
+		createAndJoin(_channel_it);
 		return false;
 	}
 
@@ -89,6 +91,7 @@ bool	JoinCommand::parse(std::string _channel_it)
 		_server.sendReply(_client, formatError(443, _client.getNickname(), _channel_it, _channel->getName()));
 		return false;
 	}
+	return true;
 }
 
 bool	JoinCommand::checkModesAndConditions(std::string _key_it)
@@ -117,9 +120,10 @@ bool	JoinCommand::checkModesAndConditions(std::string _key_it)
 	return true;
 }
 
-void	JoinCommand::createAndJoin()
+void	JoinCommand::createAndJoin(std::string _channelName)
 {
+	_channel = new Channel(_channelName);
 	_channel->addClient(&_client);
 	_channel->addOperator(&_client);
-	_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _args[1]);
+	_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _channel->getName());
 }
