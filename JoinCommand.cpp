@@ -53,14 +53,8 @@ void JoinCommand::execute()
 		_server.sendReply(_client, formatError(461, _client.getNickname(), "JOIN", ""));
 		return;
 	}
-	if (_args.empty())
-	{
-		_server.sendReply(_client, formatError(461, _client.getNickname(), "JOIN", ""));
-		return ;
-	}
 	_channels = split(_args[0], ',');
-	if (_args.size() > 1)
-		_keys = split(_args[1], ',');
+	_keys = split(_args[1], ',');
 	std::string	_aux_key = "";
 	for(int i = 0; i < (int)_channels.size(); i++)
 	{
@@ -99,8 +93,6 @@ bool	JoinCommand::parse(std::string _channel_it)
 		return false;
 	}
 	return true;
-
-	return true;
 }
 
 bool	JoinCommand::checkModesAndConditions(std::string _key_it)
@@ -132,7 +124,6 @@ bool	JoinCommand::checkModesAndConditions(std::string _key_it)
 void	JoinCommand::createAndJoin(std::string _channelName)
 {
 	_channel = new Channel(_channelName);
-	//create channel
 	_channel->addClient(&_client);
 	_channel->addOperator(&_client);
 	_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _channel->getName());
