@@ -123,8 +123,9 @@ bool	JoinCommand::checkModesAndConditions(std::string _key_it)
 
 void	JoinCommand::createAndJoin(std::string _channelName)
 {
-	_channel = new Channel(_channelName);
-	_channel->addClient(&_client);
-	_channel->addOperator(&_client);
-	_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _channel->getName());
+	Channel _channel(_channelName);
+	_channel.addClient(&_client);
+	_channel.addOperator(&_client);
+	_server.add_newChannel(_channel);
+	_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _channel.getName());
 }

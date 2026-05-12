@@ -280,6 +280,11 @@ void Server::initCommandHandlers()
 	_commandHandlers["MODE"] = &Server::handleMode;
 }
 
+void Server::add_newChannel(const Channel _channel)
+{
+	_channels.insert({_channel.getName(), _channel});
+}
+
 void Server::processClientBuffer(Client& client)
 {
 	std::string message;
@@ -354,6 +359,7 @@ Client* Server::findClientByNickname(const std::string &nickname)
 	}
 	return NULL;
 }
+
 
 void Server::sendMessage(int fd, const std::string& message)
 {

@@ -26,6 +26,7 @@ public:
 		Channel* findChannel(const std::string &name);
 		Client* findClientByNickname(const std::string &nickname);
 		void sendReply(const Client& client, const std::string& message);
+		void add_newChannel(const Channel _channel);
 
 private:
 	int						_port;
