@@ -282,7 +282,7 @@ void Server::initCommandHandlers()
 
 void Server::add_newChannel(const Channel _channel)
 {
-	_channels.insert({_channel.getName(), _channel});
+	_channels.insert(std::make_pair(_channel.getName(), _channel));
 }
 
 void Server::processClientBuffer(Client& client)
