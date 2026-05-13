@@ -1,5 +1,5 @@
 #include "JoinCommand.hpp"
-#include "utils.cpp"
+#include "utils.hpp"
 #include <sstream>
 
 static std::string formatError(int code, const std::string& nick, const std::string& arg1, const std::string& arg2) {
@@ -70,6 +70,7 @@ void JoinCommand::execute()
 		_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _channel->getName());
 	}
 }
+
 bool	JoinCommand::parse(std::string _channel_it)
 {
 	if (_args[0][0] != '#')

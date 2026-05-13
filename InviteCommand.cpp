@@ -1,5 +1,5 @@
 #include "InviteCommand.hpp"
-#include "utils.cpp"
+#include "utils.hpp"
 #include <sstream>
 
 static std::string formatError(int code, const std::string& nick, const std::string& arg1, const std::string& arg2) {
@@ -54,7 +54,7 @@ bool InviteCommand::parseAndChecks()
     {
         //llamada a funcion error ERR_NEEDMOREPARAMS
 		_server.sendReply(_client, formatError(461, _client.getNickname(), "INVITE", ""));
-		return;
+		return false;
     }
 
     _channel = _server.findChannel(_args[1]);
@@ -80,7 +80,7 @@ bool InviteCommand::parseAndChecks()
 		_server.sendReply(_client, formatError(443, _client.getNickname(), _args[1], ""));
 		return false;
 	}
-   
+
     //Comprobar si el canal está en modo solo invitar y el cliente es operador
     if (_channel->isModeSet('i') && !_channel->isOperator(&_client))
     {

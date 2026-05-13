@@ -1,9 +1,9 @@
 #include "PartCommand.hpp"
-#include "utils.cpp"
+#include "utils.hpp"
 #include <sstream>
 
 static std::string formatError(int code, const std::string& nick, const std::string& arg1, const std::string& arg2) {
-    
+
 	std::stringstream ss;
     ss << code << " " << nick << " ";
 

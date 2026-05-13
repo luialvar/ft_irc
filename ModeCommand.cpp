@@ -1,5 +1,6 @@
 #include "ModeCommand.hpp"
 #include <sstream>
+#include <iostream>
 
 const std::string MODES = "itkol";
 
@@ -77,6 +78,7 @@ bool	ModeCommand::_parse()
 	_targetChannel = _server.findChannel(_args[0]);
 	if (_targetChannel == NULL)
 	{
+		std::cout <<" :No such nick/channel";
 		//llamada a funcion error ERR_NOSUCHCHANNEL
 		_server.sendReply(_client, formatError(403, _client.getNickname(), _args[0], ""));
 		return false;

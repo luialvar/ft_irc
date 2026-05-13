@@ -5,6 +5,7 @@
 #include "Client.hpp"   // -> clase Client
 #include "Channel.hpp"  // -> clase Channel
 #include <string>       // -> std::string
+#include <list>         // -> std::list
 #include <vector>       // -> std::vector
 #include <poll.h>       // -> struct pollfd, poll()
 #include <csignal>
@@ -33,7 +34,7 @@ private:
 	std::string				_password;
 	std::string				_serverName;
 	int						_serverSocketFd;
-	std::vector<Client>		_clients;
+	std::list<Client>		_clients;
 	std::vector<pollfd>		_fds;
 
 	std::map<std::string, Channel> _channels;

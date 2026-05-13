@@ -1,9 +1,6 @@
-#include <iostream>
-#include <cstdlib>
-#include <vector>
-#include <string>
+#include "utils.hpp"
 
-std::vector<std::string> split(const std::string& str, char pattern) 
+std::vector<std::string> split(const std::string& str, char pattern)
 {
     size_t posInit = 0;
     size_t posFound;

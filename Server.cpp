@@ -206,10 +206,10 @@ void Server::receiveNewData(int fd)
 
 void Server::closeAllFds()
 {
-	for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i)
+	for (std::list<Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (_clients[i].getFd() != -1)
-			close(_clients[i].getFd());
+		if (it->getFd() != -1)
+			close(it->getFd());
 	}
 
 	if (_serverSocketFd != -1)
@@ -233,12 +233,11 @@ void Server::removeClient(int fd)
 		}
 	}
 
-	for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i)
-	//-> remove the client from the vector of clients
+	for (std::list<Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (_clients[i].getFd() == fd)
+		if (it->getFd() == fd)
 		{
-			_clients.erase(_clients.begin() + i);
+			_clients.erase(it);
 			break;
 		}
 	}
@@ -246,20 +245,20 @@ void Server::removeClient(int fd)
 
 Client* Server::findClientByFd(int fd)
 {
-	for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i)
+	for (std::list<Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (_clients[i].getFd() == fd)
-			return &_clients[i];
+		if (it->getFd() == fd)
+			return &(*it);
 	}
 	return 0;
 }
 
 const Client* Server::findClientByFd(int fd) const
 {
-	for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i)
+	for (std::list<Client>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (_clients[i].getFd() == fd)
-			return &_clients[i];
+		if (it->getFd() == fd)
+			return &(*it);
 	}
 	return 0;
 }
@@ -351,12 +350,10 @@ Channel* Server::findChannel(const std::string &name)
 
 Client* Server::findClientByNickname(const std::string &nickname)
 {
-	size_t i = 0;
-	while (i < _clients.size())
+	for (std::list<Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (_clients[i].getNickname() == nickname)
-			return &_clients[i];
-		i++;
+		if (it->getNickname() == nickname)
+			return &(*it);
 	}
 	return NULL;
 }
@@ -622,9 +619,9 @@ bool Server::isNicknameInUse(const std::string& nickname) const
 {
     std::string wanted = toUpperCommand(nickname);
 
-    for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i)
+    for (std::list<Client>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
     {
-        if (toUpperCommand(_clients[i].getNickname()) == wanted)
+        if (toUpperCommand(it->getNickname()) == wanted)
             return true;
     }
     return false;
