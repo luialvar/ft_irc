@@ -53,6 +53,7 @@ void JoinCommand::execute()
 		_server.sendReply(_client, formatError(461, _client.getNickname(), "JOIN", ""));
 		return;
 	}
+	//Añadido los vectors para los casos en los que pueden llegar varios canales/keys
 	_channels = split(_args[0], ',');
 	_keys = split(_args[1], ',');
 	std::string	_aux_key = "";

@@ -4,6 +4,7 @@
 #include "includes/parser.hpp"
 #include "ModeCommand.hpp"
 #include "JoinCommand.hpp"
+#include "InviteCommand.hpp"
 
 #include <iostream>       // -> std::cout, std::cerr
 #include <stdexcept>      // -> std::runtime_error, std::exception
@@ -419,8 +420,8 @@ void Server::handleKick(Client& client, const std::vector<std::string>& tokens)
 }
 void Server::handleInvite(Client& client, const std::vector<std::string>& tokens)
 {
-	(void) tokens;
-	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+	InviteCommand inv(*this, client, tokens);
+	inv.execute();
 }
 void Server::handleTopic(Client& client, const std::vector<std::string>& tokens)
 {
