@@ -35,7 +35,7 @@ void	PartCommand::execute()
 	{
 		//llamada a funcion error ERR_NEEDMOREPARAMS
 		_server.sendReply(_client, formatError(461, _client.getNickname(), "PART", ""));
-		return;;
+		return;
 	}
 	_channels = split(_args[0], ',');
 	for(int i = 0; i < _channels.size(); i++)

@@ -53,79 +53,66 @@ void JoinCommand::execute()
 		_server.sendReply(_client, formatError(461, _client.getNickname(), "JOIN", ""));
 		return;
 	}
-
+	//Añadido los vectors para los casos en los que pueden llegar varios canales/keys
 	_channels = split(_args[0], ',');
-	if (_args.size() > 1 && !_args[1].empty())
-		_keys = split(_args[1], ',');
-
-	for(size_t i = 0; i < _channels.size(); i++)
+	if (_args.size() == 2)
+		_keys = splitKeys(_args[1]);
+	std::string	_aux_key = "";
+	for(int i = 0; i < (int)_channels.size(); i++)
 	{
-		const std::string& channelName = _channels[i];
-		std::string key = (i < _keys.size()) ? _keys[i] : "";
-
-		if (channelName.empty() || channelName[0] != '#')
-		{
-			_server.sendReply(_client, formatError(407, _client.getNickname(), channelName, ""));
-			continue;
-		}
-
-		_channel = _server.findChannel(channelName);
-
-		if (_channel == NULL)
-		{
-			Channel newChannel(channelName);
-			_server.add_newChannel(newChannel);
-			_channel = _server.findChannel(channelName);
-
-			if (!_channel) continue;
-
-			if (!key.empty())
-			{
-				_channel->setKey(key);
-				_channel->setMode('k');
-			}
-			_channel->addClient(&_client);
-			_channel->addOperator(&_client);
-		}
-		else
-		{
-			if (_channel->hasClient(&_client))
-			{
-				_server.sendReply(_client, formatError(443, _client.getNickname(), channelName, _client.getNickname()));
-				continue;
-			}
-			if (!checkModesAndConditions(key))
-				continue;
-			_channel->addClient(&_client);
-		}
-
-		std::string joinMsg = ":" + _client.getNickname() + "!" + _client.getUsername() + "@" + _client.getIp() + " JOIN :" + _channel->getName();
-		_channel->broadcastMessage(joinMsg, _server, NULL);
-
-		if (!_channel->getTopic().empty())
-			_server.sendReply(_client, "332 " + _client.getNickname() + " " + _channel->getName() + " :" + _channel->getTopic());
-		else
-			_server.sendReply(_client, "331 " + _client.getNickname() + " " + _channel->getName() + " :No topic is set");
-
-		_server.sendReply(_client, "353 " + _client.getNickname() + " = " + _channel->getName() + " :" + _channel->getUserListString());
-		_server.sendReply(_client, "366 " + _client.getNickname() + " " + _channel->getName() + " :End of /NAMES list.");
+		if (!parse(_channels[i]))
+			return;
+		if (!_keys.empty())
+			_aux_key = _keys[i];
+		if ((!_channels.empty()) && !checkModesAndConditions(_aux_key))
+			return;
+		_channel->addClient(&_client);
+		_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _channel->getName());
 	}
+}
+bool	JoinCommand::parse(std::string _channel_it)
+{
+	if (_args[0][0] != '#')
+	{
+		//llamada a funcion error ERR_BADCHANMASK
+		_server.sendReply(_client, formatError(407, _client.getNickname(),_channel_it, ""));
+		return false;
+	}
+
+	_channel = _server.findChannel(_channel_it);
+	if (_channel == NULL)
+	{
+		//llamada a funcion error ERR_NOSUCHCHANNEL
+		_server.sendReply(_client, formatError(403, _client.getNickname(), _channel_it, ""));
+		createAndJoin(_channel_it);
+		return false;
+	}
+
+	if (_channel->hasClient(&_client))
+	{
+		_server.sendReply(_client, formatError(443, _client.getNickname(), _channel_it, _channel->getName()));
+		return false;
+	}
+	return true;
 }
 
 bool	JoinCommand::checkModesAndConditions(std::string _key_it)
 {
-	if (_channel->isModeSet('l') && _channel->getUserLimit() > 0 && _channel->getClientCount() >= _channel->getUserLimit())
+
+	if (_channel->isModeSet('l') && (_channel->getUserLimit() == _channel->getClientCount()))
 	{
 		//llamada a funcion error ERR_CHANNELISFULL
 		_server.sendReply(_client, formatError(471, _client.getNickname(), _channel->getName(), ""));
 		return false;
 	}
-	if (_channel->isModeSet('k') && !_channel->checkKey(_key_it))
+
+	if (_channel->isModeSet('k') && _key_it != _channel->getKey())
 	{
 		//llamada a funcion error ERR_BADCHANNELKEY
 		_server.sendReply(_client, formatError(475, _client.getNickname(), _channel->getName(), ""));
 		return false;
 	}
+
 	if (_channel->isModeSet('i') && !(_channel->isInvited(&_client)))
 	{
 		//llamada a funcion error ERR_INVITEONLYCHAN
@@ -133,4 +120,13 @@ bool	JoinCommand::checkModesAndConditions(std::string _key_it)
 		return false;
 	}
 	return true;
+}
+
+void	JoinCommand::createAndJoin(std::string _channelName)
+{
+	Channel _channel(_channelName);
+	_channel.addClient(&_client);
+	_channel.addOperator(&_client);
+	_server.add_newChannel(_channel);
+	_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _channel.getName());
 }
