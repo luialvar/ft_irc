@@ -18,3 +18,25 @@ std::vector<std::string> split(const std::string& str, char pattern)
 
     return results;
 }
+
+std::vector<std::string> splitKeys(const std::string& str)
+{
+    std::vector<std::string> result;
+    std::string current;
+
+    for (size_t i = 0; i < str.size(); ++i)
+    {
+        if (str[i] == ',')
+        {
+            result.push_back(current);
+            current.clear();
+        }
+        else
+        {
+            current += str[i];
+        }
+    }
+    result.push_back(current);
+
+    return result;
+}

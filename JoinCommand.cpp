@@ -55,7 +55,8 @@ void JoinCommand::execute()
 	}
 	//Añadido los vectors para los casos en los que pueden llegar varios canales/keys
 	_channels = split(_args[0], ',');
-	_keys = split(_args[1], ',');
+	if (_args.size() == 2)
+		_keys = splitKeys(_args[1]);
 	std::string	_aux_key = "";
 	for(int i = 0; i < (int)_channels.size(); i++)
 	{
