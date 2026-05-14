@@ -362,6 +362,7 @@ Client* Server::findClientByNickname(const std::string &nickname)
 void Server::sendMessage(int fd, const std::string& message)
 {
 	std::string full_message = message + "\r\n";
+	std::cout <<"Mensaje=" << full_message;
 	if (send(fd, full_message.c_str(), full_message.length(), 0) < 0)
 	{
 		std::cerr << "send() failed for client <" << fd << ">" << std::endl;

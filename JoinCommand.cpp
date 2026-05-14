@@ -1,6 +1,7 @@
 #include "JoinCommand.hpp"
 #include "utils.hpp"
 #include <sstream>
+#include <sys/socket.h>
 
 static std::string formatError(int code, const std::string& nick, const std::string& arg1, const std::string& arg2) {
 
@@ -61,19 +62,21 @@ void JoinCommand::execute()
 	for(int i = 0; i < (int)_channels.size(); i++)
 	{
 		if (!parse(_channels[i]))
-			return;
+			continue;
 		if (!_keys.empty())
 			_aux_key = _keys[i];
 		if ((!_channels.empty()) && !checkModesAndConditions(_aux_key))
-			return;
+			continue;
+		std::cout << "Client: " + _client.getNickname() + " is going to join channel " + _channel->getName() + "\n";
 		_channel->addClient(&_client);
-		_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _channel->getName());
+		std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@irc.local JOIN :" + _channel->getName() + "\r\n";
+		send(_client.getFd(), str.c_str(), str.length(), 0);
 	}
 }
 
 bool	JoinCommand::parse(std::string _channel_it)
 {
-	if (_args[0][0] != '#')
+	if (_channel_it[0] != '#')
 	{
 		//llamada a funcion error ERR_BADCHANMASK
 		_server.sendReply(_client, formatError(407, _client.getNickname(),_channel_it, ""));
@@ -84,9 +87,9 @@ bool	JoinCommand::parse(std::string _channel_it)
 	if (_channel == NULL)
 	{
 		//llamada a funcion error ERR_NOSUCHCHANNEL
-		_server.sendReply(_client, formatError(403, _client.getNickname(), _channel_it, ""));
+		//_server.sendReply(_client, formatError(403, _client.getNickname(), _channel_it, ""));
 		createAndJoin(_channel_it);
-		return false;
+		return true;
 	}
 
 	if (_channel->hasClient(&_client))
@@ -125,9 +128,12 @@ bool	JoinCommand::checkModesAndConditions(std::string _key_it)
 
 void	JoinCommand::createAndJoin(std::string _channelName)
 {
-	Channel _channel(_channelName);
-	_channel.addClient(&_client);
-	_channel.addOperator(&_client);
-	_server.add_newChannel(_channel);
-	_server.sendReply(_client, _client.getNickname() + " is joining the channel " + _channel.getName());
+	Channel _newChannel(_channelName);
+	_newChannel.addClient(&_client);
+	_newChannel.addOperator(&_client);
+	_server.add_newChannel(_newChannel);
+	_channel = _server.findChannel(_channelName);
+	std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@irc.local JOIN :" + _channel->getName() + "\r\n";
+	//_server.sendReply(_client, "JOIN :" + _channel->getName());
+	send(_client.getFd(), str.c_str(), str.length(), 0);
 }
