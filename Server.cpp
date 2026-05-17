@@ -6,6 +6,7 @@
 #include "JoinCommand.hpp"
 #include "InviteCommand.hpp"
 #include "PartCommand.hpp"
+#include "PrivmsgCommand.hpp"
 
 #include <iostream>       // -> std::cout, std::cerr
 #include <stdexcept>      // -> std::runtime_error, std::exception
@@ -414,8 +415,8 @@ void Server::handlePart(Client& client, const std::vector<std::string>& tokens)
 }
 void Server::handlePrivmsg(Client& client, const std::vector<std::string>& tokens)
 {
-	(void) tokens;
-	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+	PrivmsgCommand msg(*this, client, tokens);
+	msg.execute();
 }
 void Server::handleKick(Client& client, const std::vector<std::string>& tokens)
 {

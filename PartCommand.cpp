@@ -39,6 +39,7 @@ void	PartCommand::execute()
 		_server.sendReply(_client, formatError(461, _client.getNickname(), "PART", ""));
 		return;
 	}
+	std::string reason = "";
 	_channels = split(_args[0], ',');
 	for(int i = 0; i < (int)_channels.size(); i++)
 	{
@@ -49,7 +50,9 @@ void	PartCommand::execute()
 		_channel->removeClient(&_client);
 		
 		//Comando para HexChat y mensaje para todos los clientes del canal
-		std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@" + _server.getServerName() + " PART :" + _channel->getName() + "\r\n";
+		if (_args.size() == 2)
+			reason = " :" + _args[1];
+		std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@" + _server.getServerName() + " PART :" + _channel->getName() + reason + "\r\n";
 		send(_client.getFd(), str.c_str(), str.length(), 0);
 		for(int j = 0; j < (int)_channel->getClientCount(); j++)
 		{
