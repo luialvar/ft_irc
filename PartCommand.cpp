@@ -1,12 +1,14 @@
 #include "PartCommand.hpp"
 #include "utils.hpp"
 #include <sstream>
+#include <sys/socket.h>
 
 static std::string formatError(int code, const std::string& nick, const std::string& arg1, const std::string& arg2) {
 
 	std::stringstream ss;
     ss << code << " " << nick << " ";
 
+	(void) arg2;
     switch (code) {
         case 403: // ERR_NOSUCHCHANNEL
             ss << arg1 << " :No such channel";
@@ -38,12 +40,31 @@ void	PartCommand::execute()
 		return;
 	}
 	_channels = split(_args[0], ',');
-	for(int i = 0; i < _channels.size(); i++)
+	for(int i = 0; i < (int)_channels.size(); i++)
 	{
 		if (!parse(_channels[i]))
-			return;
+			continue;
+			
+		//Borrar el cliente del canal
 		_channel->removeClient(&_client);
-		_server.sendReply(_client, _client.getUsername() + " is leaving the channel " + _channels[i]);
+		
+		//Comando para HexChat y mensaje para todos los clientes del canal
+		std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@" + _server.getServerName() + " PART :" + _channel->getName() + "\r\n";
+		send(_client.getFd(), str.c_str(), str.length(), 0);
+		for(int j = 0; j < (int)_channel->getClientCount(); j++)
+		{
+			int fd = _channel->getClients()[j]->getFd();
+			send(fd, str.c_str(), str.length(), 0);
+		}
+
+		//Comprobar si queda alguien en el canal por si hay que eliminar dicho canal o nombrar otro operador en el caso que este lo fuese
+		if (_channel->getClientCount() == 0)
+			_server.remove_Channel(*_channel);
+		else if (_channel->isOperator(&_client))
+		{
+			_channel->removeOperator(&_client);
+			_channel->addOperator(_channel->getClients().front());
+		}
 	}
 }
 

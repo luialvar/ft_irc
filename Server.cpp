@@ -5,6 +5,7 @@
 #include "ModeCommand.hpp"
 #include "JoinCommand.hpp"
 #include "InviteCommand.hpp"
+#include "PartCommand.hpp"
 
 #include <iostream>       // -> std::cout, std::cerr
 #include <stdexcept>      // -> std::runtime_error, std::exception
@@ -285,6 +286,11 @@ void Server::add_newChannel(const Channel _channel)
 	_channels.insert(std::make_pair(_channel.getName(), _channel));
 }
 
+void Server::remove_Channel(const Channel _channel)
+{
+	_channels.erase(_channel.getName());
+}
+
 void Server::processClientBuffer(Client& client)
 {
 	std::string message;
@@ -403,8 +409,8 @@ void Server::handleJoin(Client& client, const std::vector<std::string>& tokens)
 }
 void Server::handlePart(Client& client, const std::vector<std::string>& tokens)
 {
-	(void) tokens;
-	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+	PartCommand part(*this, client, tokens);
+	part.execute();
 }
 void Server::handlePrivmsg(Client& client, const std::vector<std::string>& tokens)
 {
@@ -443,6 +449,11 @@ void Server::handleMode(Client& client, const std::vector<std::string>& tokens)
 static std::string serverName()
 {
     return "ircserv";
+}
+
+std::string	Server::getServerName()
+{
+	return serverName();
 }
 
 static std::string toUpperCommand(const std::string& command)

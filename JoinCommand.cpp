@@ -54,11 +54,13 @@ void JoinCommand::execute()
 		_server.sendReply(_client, formatError(461, _client.getNickname(), "JOIN", ""));
 		return;
 	}
+
 	//Añadido los vectors para los casos en los que pueden llegar varios canales/keys
 	_channels = split(_args[0], ',');
 	if (_args.size() == 2)
 		_keys = splitKeys(_args[1]);
 	std::string	_aux_key = "";
+
 	for(int i = 0; i < (int)_channels.size(); i++)
 	{
 		if (!parse(_channels[i]))
@@ -67,9 +69,9 @@ void JoinCommand::execute()
 			_aux_key = _keys[i];
 		if ((!_channels.empty()) && !checkModesAndConditions(_aux_key))
 			continue;
-		std::cout << "Client: " + _client.getNickname() + " is going to join channel " + _channel->getName() + "\n";
+		
 		_channel->addClient(&_client);
-		std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@irc.local JOIN :" + _channel->getName() + "\r\n";
+		std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@" + _server.getServerName() + " JOIN :" + _channel->getName() + "\r\n";
 		send(_client.getFd(), str.c_str(), str.length(), 0);
 	}
 }
@@ -89,7 +91,7 @@ bool	JoinCommand::parse(std::string _channel_it)
 		//llamada a funcion error ERR_NOSUCHCHANNEL
 		//_server.sendReply(_client, formatError(403, _client.getNickname(), _channel_it, ""));
 		createAndJoin(_channel_it);
-		return true;
+		return false;
 	}
 
 	if (_channel->hasClient(&_client))
@@ -133,7 +135,6 @@ void	JoinCommand::createAndJoin(std::string _channelName)
 	_newChannel.addOperator(&_client);
 	_server.add_newChannel(_newChannel);
 	_channel = _server.findChannel(_channelName);
-	std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@irc.local JOIN :" + _channel->getName() + "\r\n";
-	//_server.sendReply(_client, "JOIN :" + _channel->getName());
+	std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@" + _server.getServerName() + " JOIN :" + _channel->getName() + "\r\n";
 	send(_client.getFd(), str.c_str(), str.length(), 0);
 }

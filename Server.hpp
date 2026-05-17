@@ -11,6 +11,8 @@
 #include <csignal>
 #include "./includes/ft_irc.hpp"
 
+
+
 class Server
 {
 public:
@@ -28,6 +30,8 @@ public:
 		Client* findClientByNickname(const std::string &nickname);
 		void sendReply(const Client& client, const std::string& message);
 		void add_newChannel(const Channel _channel);
+		std::string	getServerName();
+		void remove_Channel(const Channel _channel);
 
 private:
 	int						_port;
