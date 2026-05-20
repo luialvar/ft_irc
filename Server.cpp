@@ -7,6 +7,7 @@
 #include "InviteCommand.hpp"
 #include "PartCommand.hpp"
 #include "PrivmsgCommand.hpp"
+#include "TopicCommand.hpp"
 
 #include <iostream>       // -> std::cout, std::cerr
 #include <stdexcept>      // -> std::runtime_error, std::exception
@@ -369,7 +370,6 @@ Client* Server::findClientByNickname(const std::string &nickname)
 void Server::sendMessage(int fd, const std::string& message)
 {
 	std::string full_message = message + "\r\n";
-	std::cout <<"Mensaje=" << full_message;
 	if (send(fd, full_message.c_str(), full_message.length(), 0) < 0)
 	{
 		std::cerr << "send() failed for client <" << fd << ">" << std::endl;
@@ -430,8 +430,8 @@ void Server::handleInvite(Client& client, const std::vector<std::string>& tokens
 }
 void Server::handleTopic(Client& client, const std::vector<std::string>& tokens)
 {
-	(void) tokens;
-	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+	TopicCommand topic(*this, client, tokens);
+	topic.execute();
 }
 void Server::handleMode(Client& client, const std::vector<std::string>& tokens)
 {

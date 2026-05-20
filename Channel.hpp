@@ -6,6 +6,7 @@
 #include <set> // Para almacenar modos y clientes invitados de forma eficiente
 #include <algorithm> // Para std::find en algunas implementaciones
 #include <sstream>
+#include <time.h>
 
 class Client; // Forward-declaration para evitar includes circulares
 class Server;
@@ -15,6 +16,8 @@ class Channel
 private:
 	std::string			_name;
 	std::string			_topic;
+	std::string			_topicSetter;
+	time_t				_topicTime;
 	std::vector<Client*> _clients;
 	std::set<char>		_modes; // Almacena los caracteres de los modos activos (ej: 'i', 't', 'k', 'o', 'l')
 	std::string			_key; // Contraseña para el modo +k
@@ -29,7 +32,11 @@ public:
 
 	const std::string& getName() const;
 	const std::string& getTopic() const;
+	const std::string& getTopicSetter() const;
+	const std::string getTopicTime() const;
 	void setTopic(const std::string &topic);
+	void setTopicSetter(const std::string &topicSetter);
+	void setTopicTime();
 
 	// Gestión de clientes en el canal
 	void addClient(Client *client);

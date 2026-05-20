@@ -1,5 +1,6 @@
 #include "Channel.hpp"
 #include "Server.hpp"
+#include <ctime>
 
 
 Channel::Channel(const std::string& name) : _name(name), _topic(""), _userLimit(0)
@@ -20,9 +21,32 @@ const std::string &Channel::getTopic() const
 	return _topic;
 }
 
+const std::string &Channel::getTopicSetter() const
+{
+	return _topicSetter;
+}
+
+const std::string Channel::getTopicTime() const
+{
+	std::stringstream ss;
+	ss << _topicTime;
+
+	return ss.str();
+}
+
 void Channel::setTopic(const std::string &topic)
 {
 	_topic = topic;
+}
+
+void Channel::setTopicSetter(const std::string &topicSetter)
+{
+	_topicSetter = topicSetter;
+}
+
+void Channel::setTopicTime()
+{
+	_topicTime = std::time(NULL);
 }
 
 void Channel::addClient(Client *client)

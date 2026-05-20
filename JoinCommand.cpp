@@ -133,6 +133,7 @@ void	JoinCommand::createAndJoin(std::string _channelName)
 	Channel _newChannel(_channelName);
 	_newChannel.addClient(&_client);
 	_newChannel.addOperator(&_client);
+	_newChannel.setTopic("");
 	_server.add_newChannel(_newChannel);
 	_channel = _server.findChannel(_channelName);
 	std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@" + _server.getServerName() + " JOIN :" + _channel->getName() + "\r\n";
