@@ -8,6 +8,7 @@
 #include "PartCommand.hpp"
 #include "PrivmsgCommand.hpp"
 #include "TopicCommand.hpp"
+#include "KickCommand.hpp"
 
 #include <iostream>       // -> std::cout, std::cerr
 #include <stdexcept>      // -> std::runtime_error, std::exception
@@ -420,8 +421,8 @@ void Server::handlePrivmsg(Client& client, const std::vector<std::string>& token
 }
 void Server::handleKick(Client& client, const std::vector<std::string>& tokens)
 {
-	(void) tokens;
-	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+	KickCommand kick(*this, client, tokens);
+	kick.execute();
 }
 void Server::handleInvite(Client& client, const std::vector<std::string>& tokens)
 {
