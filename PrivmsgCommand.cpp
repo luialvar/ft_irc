@@ -96,6 +96,7 @@ bool PrivmsgCommand::msgChannel(Channel &_targetChannel)
         _server.sendReply(_client, formatError(412, _client.getNickname(), "PRIVMSG", ""));
         return false;
     }
+
     //Comprobar que el cliente está en el canal al que quiere mandar el mensaje
     if (_targetChannel.hasClient(&_client))
     {
@@ -128,7 +129,7 @@ bool PrivmsgCommand::msgChannel(Channel &_targetChannel)
     else
     {
         //llamada a funcion error ERR_NOTONCHANNEL
-        _server.sendReply(_client, formatError(442, _client.getNickname(), _channel->getName(), ""));
+        _server.sendReply(_client, formatError(442, _client.getNickname(), _targetChannel.getName(), ""));
 		return false;
     }
 }
