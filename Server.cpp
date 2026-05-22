@@ -9,6 +9,7 @@
 #include "PrivmsgCommand.hpp"
 #include "TopicCommand.hpp"
 #include "KickCommand.hpp"
+#include "WhoCommand.hpp"
 
 #include <iostream>       // -> std::cout, std::cerr
 #include <stdexcept>      // -> std::runtime_error, std::exception
@@ -282,6 +283,7 @@ void Server::initCommandHandlers()
 	_commandHandlers["INVITE"] = &Server::handleInvite;
 	_commandHandlers["TOPIC"] = &Server::handleTopic;
 	_commandHandlers["MODE"] = &Server::handleMode;
+	_commandHandlers["WHO"] = &Server::handleWho;
 }
 
 void Server::add_newChannel(const Channel _channel)
@@ -446,6 +448,12 @@ void Server::handleMode(Client& client, const std::vector<std::string>& tokens)
 		ModeCommand cmd(*this, client, tokens);
 		cmd.execute();
 	}
+}
+
+void Server::handleWho(Client& client, const std::vector<std::string>& tokens)
+{
+	WhoCommand who(*this, client, tokens);
+	who.execute();
 }
 
 static std::string serverName()

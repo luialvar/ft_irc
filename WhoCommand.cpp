@@ -64,9 +64,40 @@ bool WhoCommand::parse()
 		_server.sendReply(_client, formatError(442, _client.getNickname(), _args[0], ""));
 		return false;
 	}
+    return true;
 }
 
 void WhoCommand::sendInfo()
 {
+    std::string flag;
+    std::string str;
+    Client* target;
 
+    for(int i = 0; i < (int)_channel->getClientCount(); i++)
+    {
+        target = _channel->getClients()[i];
+        if (_channel->isOperator(target))
+            flag = "H@";
+        else
+            flag = "H";
+
+        str = 
+            " 352 " +
+            _client.getNickname() + " " +
+            _channel->getName() + " " +
+            target->getUsername() + " localhost " +
+            _server.getServerName() + " " +
+            target->getNickname() + " " +
+            flag + " :0" +
+            target->getRealname();
+
+        _server.sendReply(_client, str);
+    }
+    str =
+        " 315 " +
+        _client.getNickname() + " " +
+        _channel->getName() +
+        " :End of /WHO list";
+
+    _server.sendReply(_client, str);
 }

@@ -41,13 +41,11 @@ KickCommand::~KickCommand(){}
 
 void KickCommand::execute()
 {
-    for(int i = 0; i < (int)_args.size(); i++)
-        std::cout << "------------------------------------ARG[" << i << "] = " << _args[i] << "\n";
     if (!parse())
     return;
     
     
-    _kickClients = split(_args[2], ',');
+    _kickClients = split(_args[1], ',');
 
     for(int i = 0; i < (int)_kickClients.size(); i++)
         checkForKick(_kickClients[i]);
@@ -64,13 +62,13 @@ bool    KickCommand::parse()
     _channel = _server.findChannel(_args[0]);
     if (_channel == NULL)
     {
-        _server.sendReply(_client, formatError(403, _client.getNickname(), _args[1], ""));
+        _server.sendReply(_client, formatError(403, _client.getNickname(), _args[0], ""));
         return false;
     }
     
     if (!_channel->hasClient(&_client))
     {
-        _server.sendReply(_client, formatError(442, _client.getNickname(), _args[1], ""));
+        _server.sendReply(_client, formatError(442, _client.getNickname(), _args[0], ""));
         return false;
     }
     
@@ -80,10 +78,10 @@ bool    KickCommand::parse()
         return false;
     }
     
-    if (_args.size() == 4)
-    _reason = _args[3];
+    if (_args.size() == 3)
+        _reason = _args[2];
     else
-    _reason = "";
+        _reason = "";
     
     return true;
 }
@@ -94,7 +92,6 @@ void    KickCommand::checkForKick(std::string _clientToKick)
     
     if (_target == NULL)
     {
-        std::cout << "\nAQUI LLEGAAAAAAAAAAAAA! y el nick =: " + _clientToKick + "\n";
         _server.sendReply(_client, formatError(401, _client.getNickname(), _clientToKick, ""));
         return;
     }
