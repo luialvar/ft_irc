@@ -71,8 +71,26 @@ void JoinCommand::execute()
 			continue;
 		
 		_channel->addClient(&_client);
-		std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@" + _server.getServerName() + " JOIN :" + _channel->getName() + "\r\n";
-		send(_client.getFd(), str.c_str(), str.length(), 0);
+
+		std::string str = 
+			":" +
+			_client.getNickname() +
+			"!" +
+			_client.getUsername() +
+			"@" +
+			_server.getServerName() +
+			" JOIN :" +
+			_channel->getName() +
+			"\r\n";
+
+		//Recorrer todos los clientes del canal y mandarles el mensaje
+		for(int i = 0; i < (int)_channel->getClientCount(); i++)
+		{
+			int fd = _channel->getClients()[i]->getFd();
+			send(fd, str.c_str(), str.length(), 0);
+		}
+
+		sendReplies();
 	}
 }
 
@@ -138,4 +156,36 @@ void	JoinCommand::createAndJoin(std::string _channelName)
 	_channel = _server.findChannel(_channelName);
 	std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@" + _server.getServerName() + " JOIN :" + _channel->getName() + "\r\n";
 	send(_client.getFd(), str.c_str(), str.length(), 0);
+	sendReplies();
+}
+
+void JoinCommand::sendReplies()
+{
+	std::string names;
+	std::vector<Client*> _channelClients = _channel->getClients();
+
+	for (size_t i = 0; i < _channelClients.size(); ++i)
+	{
+		if (i > 0)
+			names += " ";
+		if (_channel->isOperator(_channelClients[i]))
+			names += "@";
+		names += _channelClients[i]->getNickname();
+	}
+	std::string str =
+		"353 " +
+		_client.getNickname() +
+		" = " +
+		_channel->getName() +
+		" :" +
+		names;
+	_server.sendReply(_client, str);
+
+	str =
+		"366 " +
+		_client.getNickname() +
+		" " +
+		_channel->getName() +
+		" :End of /NAMES list";
+	_server.sendReply(_client, str);
 }

@@ -8,7 +8,6 @@ static std::string formatError(int code, const std::string& nick, const std::str
 	std::stringstream ss;
     ss << code << " " << nick << " ";
 
-	(void)arg2;
     switch (code) {
         case 401: // ERR_NOSUCHNICK
             ss << arg1 << " :No such nick";

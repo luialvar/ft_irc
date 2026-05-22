@@ -67,6 +67,9 @@ void	PartCommand::execute()
 		{
 			_channel->removeOperator(&_client);
 			_channel->addOperator(_channel->getClients().front());
+			//Recorrer todos los clientes del canal y mandarles el mensaje
+			for(int i = 0; i < (int)_channel->getClientCount(); i++)
+				_server.sendReply(*_channel->getClients()[i], "MODE " + _channel->getName() + " +o " + _channel->getClients().front()->getNickname());
 		}
 	}
 }
