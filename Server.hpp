@@ -32,6 +32,7 @@ public:
 		void add_newChannel(const Channel _channel);
 		std::string	getServerName();
 		void remove_Channel(const Channel _channel);
+		void smokeGrenade(Client& _client, const std::string& _command, const std::string& _reason);
 
 private:
 	int						_port;

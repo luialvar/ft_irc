@@ -1,4 +1,7 @@
 #include "utils.hpp"
+#include "Server.hpp"
+#include "Client.hpp"
+#include "Channel.hpp"
 
 std::vector<std::string> split(const std::string& str, char pattern)
 {

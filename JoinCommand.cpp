@@ -63,6 +63,15 @@ void JoinCommand::execute()
 
 	for(int i = 0; i < (int)_channels.size(); i++)
 	{
+		if (_channels[i] == "0")
+		{
+			_server.smokeGrenade(_client, "JOIN", "");
+			return;
+		}
+	}
+
+	for(int i = 0; i < (int)_channels.size(); i++)
+	{
 		if (!parse(_channels[i]))
 			continue;
 		if (!_keys.empty())

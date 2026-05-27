@@ -10,6 +10,7 @@
 #include "TopicCommand.hpp"
 #include "KickCommand.hpp"
 #include "WhoCommand.hpp"
+#include "QuitCommand.hpp"
 
 #include <iostream>       // -> std::cout, std::cerr
 #include <stdexcept>      // -> std::runtime_error, std::exception
@@ -404,8 +405,8 @@ void Server::handlePong(Client& client, const std::vector<std::string>& tokens)
 }
 void Server::handleQuit(Client& client, const std::vector<std::string>& tokens)
 {
-	(void) tokens;
-	std::cout<<"cliente: " << client.getUsername() <<std::endl;
+	QuitCommand quit(*this, client, tokens);
+	quit.execute();
 }
 void Server::handleJoin(Client& client, const std::vector<std::string>& tokens)
 {
@@ -658,4 +659,74 @@ bool Server::isNicknameInUse(const std::string& nickname) const
             return true;
     }
     return false;
+}
+
+//Saca al cliente de todos los canales en los que esté y manda un mensaje
+// si la función la llama QUIT o ejecuta un PART si lo llama JOIN
+void Server::smokeGrenade(Client& _client, const std::string& _command, const std::string& _reason)
+{
+	std::map<std::string, Channel>::iterator it;
+	std::set<Client*> _toNotify;
+	std::vector<Client*> _clientsInChannel;
+	std::vector<std::string> _channelsJoined;
+
+	//Guarda todos los canales en los que está unido el usuario
+	for (it = _channels.begin(); it != _channels.end(); ++it)
+	{
+		if (it->second.hasClient(&_client))
+			_channelsJoined.push_back(it->second.getName());
+	}
+
+	//Si llama un comando JOIN se encarga de hacer un PART por cada canal al que esté unido el usuario
+	if (_command == "JOIN")
+	{
+		for (size_t i = 0; i < _channelsJoined.size(); i++)
+		{
+			std::vector<std::string> tokens;
+			tokens.push_back(_channelsJoined[i]);
+
+			handlePart(_client, tokens);
+		}
+		return;
+	}
+
+	//Prepara el mensaje de notificación a los clientes que comparten canal con el usuario
+	std::string str = ":" + _client.getNickname() +
+						"!" + _client.getUsername() +
+						 "@" + getServerName() +
+						  " QUIT :" + _reason;
+
+	if(_command == "QUIT")
+	{	
+		Channel* _ch;
+		for (size_t i = 0; i < _channelsJoined.size(); i++)
+		{
+			//Guarda el canal y sus clientes sobre el que va a trabajar esta iteración
+			_ch = findChannel(_channelsJoined[i]);
+			if (_ch == NULL)
+				continue;
+			_clientsInChannel = _ch->getClients();
+
+			//Elimina al cliente del canal actual
+			_ch->removeClient(&_client);
+
+			//Elimina el canal/nombra otro operador si es necesario
+			if (_ch->getClientCount() == 0)
+				remove_Channel(*_ch);
+			else if (_ch->isOperator(&_client))
+			{
+				_ch->removeOperator(&_client);
+				_ch->addOperator(_ch->getClients().front());
+			}
+
+			//Notifica a los clientes que comparte canal con el usuario que ha usado QUIT y 
+			//los añade a la lista de notificados para no duplicar mensajes
+			for(int j = 0; j < (int)_clientsInChannel.size(); j++)
+			{
+				if (_clientsInChannel[j] != &_client && _toNotify.insert(_clientsInChannel[j]).second)
+					sendMessage(_clientsInChannel[i]->getFd(), str);
+			}
+		}
+		removeClient(_client.getFd());
+	}
 }
