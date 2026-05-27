@@ -81,6 +81,7 @@ private:
 	void handleTopic(Client& client, const std::vector<std::string>& tokens);
 	void handleMode(Client& client, const std::vector<std::string>& tokens);
 	void handleWho(Client& client, const std::vector<std::string>& tokens);
+	void handleCap(Client& client, const std::vector<std::string>& tokens);
 
 	std::vector<std::string> splitIrcMessage(const std::string& message) const;
 	std::string buildWelcomeMessage(const Client& client) const;

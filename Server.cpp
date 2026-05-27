@@ -284,6 +284,7 @@ void Server::initCommandHandlers()
 	_commandHandlers["TOPIC"] = &Server::handleTopic;
 	_commandHandlers["MODE"] = &Server::handleMode;
 	_commandHandlers["WHO"] = &Server::handleWho;
+	_commandHandlers["CAP"] = &Server::handleCap;
 }
 
 void Server::add_newChannel(const Channel _channel)
@@ -454,6 +455,16 @@ void Server::handleWho(Client& client, const std::vector<std::string>& tokens)
 {
 	WhoCommand who(*this, client, tokens);
 	who.execute();
+}
+
+void Server::handleCap(Client& client, const std::vector<std::string>& tokens)
+{
+	if (tokens.empty())
+		return;
+	if (tokens[0] == "LS")
+		sendReply(client, " CAP * LS :");
+	else if(tokens[0] == "END")
+		return;
 }
 
 static std::string serverName()
