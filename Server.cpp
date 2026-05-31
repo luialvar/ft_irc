@@ -727,6 +727,8 @@ void Server::smokeGrenade(Client& _client, const std::string& _command, const st
 					sendMessage(_clientsInChannel[j]->getFd(), str);
 			}
 		}
-		removeClient(_client.getFd());
+		int _clientFd = _client.getFd();
+		removeClient(_clientFd);
+		close(_clientFd);
 	}
 }
