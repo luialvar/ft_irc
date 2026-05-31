@@ -74,8 +74,10 @@ void JoinCommand::execute()
 	{
 		if (!parse(_channels[i]))
 			continue;
-		if (!_keys.empty())
+		if (!_keys.empty() && i < (int)_keys.size())
 			_aux_key = _keys[i];
+		else
+			_aux_key = "";
 		if ((!_channels.empty()) && !checkModesAndConditions(_aux_key))
 			continue;
 		

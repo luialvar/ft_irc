@@ -724,7 +724,7 @@ void Server::smokeGrenade(Client& _client, const std::string& _command, const st
 			for(int j = 0; j < (int)_clientsInChannel.size(); j++)
 			{
 				if (_clientsInChannel[j] != &_client && _toNotify.insert(_clientsInChannel[j]).second)
-					sendMessage(_clientsInChannel[i]->getFd(), str);
+					sendMessage(_clientsInChannel[j]->getFd(), str);
 			}
 		}
 		removeClient(_client.getFd());

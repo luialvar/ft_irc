@@ -125,5 +125,7 @@ void    KickCommand::checkForKick(std::string _clientToKick)
         send(fd, _str.c_str(), _str.length(), 0);
     }
 
+    if (_channel->isOperator(_target))
+        _channel->removeOperator(_target);
     _channel->removeClient(_target);
 }
