@@ -185,8 +185,7 @@ void Server::receiveNewData(int fd)
 		if (client == 0)
 		{
 			std::cerr << "Client <" << fd << "> not found" << std::endl;
-			removeClient(fd);
-			close(fd);
+			smokeGrenade(*findClientByFd(fd), "QUIT", "");
 			return;
 		}
 		client->appendToBuffer(buffer);
@@ -195,8 +194,7 @@ void Server::receiveNewData(int fd)
 	else if (bytes == 0)
 	{
 		std::cout << "Client <" << fd << "> Disconnected" << std::endl;
-		removeClient(fd);
-		close(fd);
+		smokeGrenade(*findClientByFd(fd), "QUIT", "");
 	}
 	else
 	{
@@ -205,8 +203,7 @@ void Server::receiveNewData(int fd)
 			return;
 		}
 		std::cerr << "recv() failed for client <" << fd << ">" << std::endl;
-		removeClient(fd);
-		close(fd);
+		smokeGrenade(*findClientByFd(fd), "QUIT", "");
 	}
 }
 
