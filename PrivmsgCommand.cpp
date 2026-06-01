@@ -72,7 +72,7 @@ void	PrivmsgCommand::execute()
             else
                 continue;
         }
-        
+
         //Comprueba si el objetivo es un usuario que existe y le intenta mandar el mensaje
         if (_server.findClientByNickname(_targets[i]))
         {
@@ -156,7 +156,7 @@ bool PrivmsgCommand::msgUser(Client &_targetUser)
             " :" +
             _args[1] +
             "\r\n";
-    
+
     send(_targetUser.getFd(), str.c_str(), str.length(), 0);
     return true;
 }
