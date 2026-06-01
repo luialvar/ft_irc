@@ -1,4 +1,4 @@
-*This project has been created as part of the 42 curriculum by malena, luialvar and manuelfe.
+* This project has been created as part of the 42 curriculum by malena, luialvar and manuelfe.
 
 # ft_irc
 Implementation of an IRC (Internet Relay Chat) server in C++98 as part of the 42 cursus.
