@@ -29,7 +29,7 @@ make
 ```
 * **`<port>`**: The port on which the server will listen for connections (e.g., 6667).
 
-* **`<password>`: The password required for clients to connect to the server.
+* **`<password>`**: The password required for clients to connect to the server.
 
 3. **Connect with an IRC client:**
 
