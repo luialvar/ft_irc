@@ -1,5 +1,16 @@
 // Server.cpp
 #include "Server.hpp"     // -> declaración de la clase Server
+#include "includes/ft_irc.hpp"
+#include "includes/parser.hpp"
+#include "ModeCommand.hpp"
+#include "JoinCommand.hpp"
+#include "InviteCommand.hpp"
+#include "PartCommand.hpp"
+#include "PrivmsgCommand.hpp"
+#include "TopicCommand.hpp"
+#include "KickCommand.hpp"
+#include "WhoCommand.hpp"
+#include "QuitCommand.hpp"
 
 #include <iostream>       // -> std::cout, std::cerr
 #include <stdexcept>      // -> std::runtime_error, std::exception
@@ -23,8 +34,9 @@ volatile sig_atomic_t Server::_signal = false;
 // sig_atomic_t is the safe type to modify inside a signal handler.
 
 Server::Server(int port, const std::string& password)
-	: _port(port), _password(password), _serverSocketFd(-1)
+	: _port(port), _password(password), _serverName("irc.local"), _serverSocketFd(-1)
 {
+	initCommandHandlers();
 }
 
 Server::~Server()
@@ -52,25 +64,34 @@ void Server::run()
 		for (size_t i = 0; i < _fds.size(); ) //-> check all file descriptors
 		{
 			int currentFd = _fds[i].fd;
+			//luialvar
+			short currentEvents = _fds[i].revents;
+			//luialvar
 
-			if (_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
+			//luialvar
+			if (currentEvents & (POLLERR | POLLHUP | POLLNVAL))
 			{
 				if (currentFd == _serverSocketFd)
 					throw(std::runtime_error("server socket poll error"));
 				else
 				{
 					std::cout << "Client <" << currentFd << "> Disconnected" << std::endl;
-					removeClient(currentFd);
-					close(currentFd);
+					disconnectClient(currentFd, "");
 				}
 			}
-			else if (_fds[i].revents & POLLIN) //-> check if there is data to read
+			else
 			{
-				if (currentFd == _serverSocketFd)
-					acceptNewClient(); //-> accept new client
-				else
-					receiveNewData(currentFd); //-> receive new data from a registered client
+				if (currentEvents & POLLIN) //-> check if there is data to read
+				{
+					if (currentFd == _serverSocketFd)
+						acceptNewClient(); //-> accept new client
+					else
+						receiveNewData(currentFd); //-> receive new data from a registered client
+				}
+				if (currentFd != _serverSocketFd && currentEvents & POLLOUT)
+					flushClientOutput(currentFd);
 			}
+			//luialvar
 			if (i < _fds.size() && _fds[i].fd == currentFd)
 				++i;
 		}
@@ -105,15 +126,15 @@ void Server::initServerSocket()
 		throw(std::runtime_error("faild to create socket"));
 
 	int en = 1;
-	if(setsockopt(_serverSocketFd, SOL_SOCKET, SO_REUSEADDR, &en, sizeof(en)) == -1) 
+	if(setsockopt(_serverSocketFd, SOL_SOCKET, SO_REUSEADDR, &en, sizeof(en)) == -1)
 	//-> set the socket option (SO_REUSEADDR) to reuse the address
 	//el servidor puede volver a hacer bind() al mismo puerto casi inmediatamente.
 		throw(std::runtime_error("faild to set option (SO_REUSEADDR) on socket"));
 	if (fcntl(_serverSocketFd, F_SETFL, O_NONBLOCK) == -1) //-> set the socket option
 	//(O_NONBLOCK) for non-blocking socket
 		throw(std::runtime_error("faild to set option (O_NONBLOCK) on socket"));
-	if (bind(_serverSocketFd, (struct sockaddr *)&add, sizeof(add)) == -1) //-> bind 
-	//the socket to the address
+	if (bind(_serverSocketFd, (struct sockaddr *)&add, sizeof(add)) == -1) //-> bind
+	//the socket to the address, basically from all local adresses
 		throw(std::runtime_error("faild to bind socket"));
 	if (listen(_serverSocketFd, SOMAXCONN) == -1) //-> listen for incoming connections
 	// and making the socket a passive socket
@@ -129,7 +150,7 @@ void Server::initServerSocket()
 void Server::acceptNewClient()
 {
 	Client cli;
-	struct sockaddr_in cliadd;
+	struct sockaddr_in cliadd; //memory for client data
 	struct pollfd newPoll;
 	socklen_t len = sizeof(cliadd);
 
@@ -170,21 +191,23 @@ void Server::receiveNewData(int fd)
 		buffer[bytes] = '\0';
 		std::cout << "Client <" << fd << "> Data: " << buffer;
 		Client *client = findClientByFd(fd);
-		if (client == 0)
-		{
-			std::cerr << "Client <" << fd << "> not found" << std::endl;
-			removeClient(fd);
-			close(fd);
-			return;
-		}
+			if (client == 0)
+			{
+				std::cerr << "Client <" << fd << "> not found" << std::endl;
+				//luialvar
+				disconnectClient(fd, "");
+				//luialvar
+				return;
+			}
 		client->appendToBuffer(buffer);
 		processClientBuffer(*client);
 	}
 	else if (bytes == 0)
 	{
 		std::cout << "Client <" << fd << "> Disconnected" << std::endl;
-		removeClient(fd);
-		close(fd);
+		//luialvar
+		disconnectClient(fd, "");
+		//luialvar
 	}
 	else
 	{
@@ -193,17 +216,18 @@ void Server::receiveNewData(int fd)
 			return;
 		}
 		std::cerr << "recv() failed for client <" << fd << ">" << std::endl;
-		removeClient(fd);
-		close(fd);
+		//luialvar
+		disconnectClient(fd, "");
+		//luialvar
 	}
 }
 
 void Server::closeAllFds()
 {
-	for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i)
+	for (std::list<Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (_clients[i].getFd() != -1)
-			close(_clients[i].getFd());
+		if (it->getFd() != -1)
+			close(it->getFd());
 	}
 
 	if (_serverSocketFd != -1)
@@ -217,7 +241,7 @@ void Server::closeAllFds()
 
 void Server::removeClient(int fd)
 {
-	for (std::vector<pollfd>::size_type i = 0; i < _fds.size(); ++i) 
+	for (std::vector<pollfd>::size_type i = 0; i < _fds.size(); ++i)
 	//-> remove the client from the pollfd
 	{
 		if (_fds[i].fd == fd)
@@ -227,12 +251,11 @@ void Server::removeClient(int fd)
 		}
 	}
 
-	for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i) 
-	//-> remove the client from the vector of clients
+	for (std::list<Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (_clients[i].getFd() == fd)
+		if (it->getFd() == fd)
 		{
-			_clients.erase(_clients.begin() + i);
+			_clients.erase(it);
 			break;
 		}
 	}
@@ -240,34 +263,22 @@ void Server::removeClient(int fd)
 
 Client* Server::findClientByFd(int fd)
 {
-	for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i)
+	for (std::list<Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (_clients[i].getFd() == fd)
-			return &_clients[i];
+		if (it->getFd() == fd)
+			return &(*it);
 	}
 	return 0;
 }
 
 const Client* Server::findClientByFd(int fd) const
 {
-	for (std::vector<Client>::size_type i = 0; i < _clients.size(); ++i)
+	for (std::list<Client>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (_clients[i].getFd() == fd)
-			return &_clients[i];
+		if (it->getFd() == fd)
+			return &(*it);
 	}
 	return 0;
-}
-
-void Server::processClientBuffer(Client& client)
-{
-	std::string message;
-
-	while (extractOneMessage(client, message))
-	{
-		std::cout << "Client <" << client.getFd() << "> Message: "
-			<< message << std::endl;
-		//here you have to follow the parsing
-	}
 }
 
 bool Server::extractOneMessage(Client& client, std::string& message)
@@ -279,4 +290,83 @@ bool Server::extractOneMessage(Client& client, std::string& message)
 	message = client.getRecvBuffer().substr(0, endPos);
 	client.eraseFromBuffer(endPos + 2);
 	return true;
+}
+
+void Server::sendMessage(int fd, const std::string& message)
+{
+	//luialvar
+	Client* client = findClientByFd(fd);
+	std::string fullMessage = message;
+
+	if (client == 0)
+		return;
+	if (fullMessage.size() < 2 || fullMessage.substr(fullMessage.size() - 2) != "\r\n")
+		fullMessage += "\r\n";
+	client->appendToSendBuffer(fullMessage);
+	setPollout(fd, true);
+	//luialvar
+}
+
+//luialvar
+void Server::flushClientOutput(int fd)
+{
+	Client* client = findClientByFd(fd);
+
+	if (client == 0)
+		return;
+	if (client->getSendBuffer().empty())
+	{
+		setPollout(fd, false);
+		return;
+	}
+	ssize_t bytes = send(fd, client->getSendBuffer().c_str(),
+			client->getSendBuffer().size(), 0);
+	if (bytes > 0)
+	{
+		client->eraseFromSendBuffer(bytes);
+		if (client->getSendBuffer().empty())
+			setPollout(fd, false);
+		return;
+	}
+	if (bytes == -1 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
+		return;
+	std::cerr << "send() failed for client <" << fd << ">" << std::endl;
+	disconnectClient(fd, "");
+}
+
+void Server::setPollout(int fd, bool enabled)
+{
+	for (std::vector<pollfd>::size_type i = 0; i < _fds.size(); ++i)
+	{
+		//Si hay mensajes pendientes: vigila lectura y escritura.
+		//Si no quedan mensajes pendientes: vigila solo lectura.
+		if (_fds[i].fd == fd)
+		{
+			if (enabled)
+				_fds[i].events = POLLIN + POLLOUT;
+			else
+				_fds[i].events = POLLIN;
+			return;
+		}
+	}
+}
+
+void Server::disconnectClient(int fd, const std::string& reason)
+{
+	Client* client = findClientByFd(fd);
+
+	if (client != 0)
+	{
+		smokeGrenade(*client, "QUIT", reason);
+		return;
+	}
+	removeClient(fd);
+	close(fd);
+}
+//luialvar
+
+void Server::sendReply(const Client& client, const std::string& message)
+{
+	// Formato estándar de respuesta: :<nombre_servidor> <mensaje>
+	sendMessage(client.getFd(), ":" + _serverName + " " + message);
 }

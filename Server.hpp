@@ -1,44 +1,68 @@
 // Server.hpp
 #ifndef SERVER_HPP
 #define SERVER_HPP
-
+#include <map>
 #include "Client.hpp"   // -> clase Client
+#include "Channel.hpp"  // -> clase Channel
 #include <string>       // -> std::string
+#include <list>         // -> std::list
 #include <vector>       // -> std::vector
 #include <poll.h>       // -> struct pollfd, poll()
 #include <csignal>
+#include "./includes/ft_irc.hpp"
+
+
 
 class Server
 {
-private:
-	int						_port;
-	std::string				_password;
-	int						_serverSocketFd;
-	std::vector<Client>		_clients;
-	std::vector<pollfd>		_fds;
-
-	static volatile sig_atomic_t _signal;
-
-
-	public:
+public:
+	// Definición de un tipo para un puntero a una función miembro manejadora de comandos
+	typedef void (Server::*CommandHandler)(Client&, const std::vector<std::string>&);
 		Server(int port, const std::string& password); // [x]
 		~Server(); // [x]
 
 		void run(); // [x]
 
 		static void signalHandler(int signum); // [x]
+		void sendMessage(int fd, const std::string& message);
+		// Nuevos métodos auxiliares para el comando MODE
+		Channel* findChannel(const std::string &name);
+		Client* findClientByNickname(const std::string &nickname);
+		void sendReply(const Client& client, const std::string& message);
+		void add_newChannel(const Channel _channel);
+		std::string	getServerName();
+		void remove_Channel(const Channel _channel);
+		void smokeGrenade(Client& _client, const std::string& _command, const std::string& _reason);
 
-	private:
+private:
+	int						_port;
+	std::string				_password;
+	std::string				_serverName;
+	int						_serverSocketFd;
+	std::list<Client>		_clients;
+	std::vector<pollfd>		_fds;
+
+	std::map<std::string, Channel> _channels;
+	std::map<std::string, CommandHandler> _commandHandlers;
+
+	static volatile sig_atomic_t _signal;
+
+
 		void initServerSocket(); // [x]
-		void acceptNewClient(); // [x]
-		void receiveNewData(int fd); // [x]
-		void closeAllFds(); // [x]
+			void acceptNewClient(); // [x]
+			void receiveNewData(int fd); // [x]
+		//luialvar
+		void flushClientOutput(int fd);
+		void setPollout(int fd, bool enabled);
+		//luialvar
+			void closeAllFds(); // [x]
 		void removeClient(int fd); // [x]
 
 		Client* findClientByFd(int fd); // [x]
 		const Client* findClientByFd(int fd) const; // [x]
+		void initCommandHandlers();
 
-	void sendMessage(int fd, const std::string& message);
+
 	void disconnectClient(int fd, const std::string& reason);
 
 		void processClientBuffer(Client& client); // [x]
@@ -61,10 +85,15 @@ private:
 	void handleInvite(Client& client, const std::vector<std::string>& tokens);
 	void handleTopic(Client& client, const std::vector<std::string>& tokens);
 	void handleMode(Client& client, const std::vector<std::string>& tokens);
+	void handleWho(Client& client, const std::vector<std::string>& tokens);
+	void handleCap(Client& client, const std::vector<std::string>& tokens);
 
 	std::vector<std::string> splitIrcMessage(const std::string& message) const;
 	std::string buildWelcomeMessage(const Client& client) const;
 	bool isNicknameInUse(const std::string& nickname) const;
+	void executeCommand(Client& client, const CommandParts &parts);
+
+
 };
 
 #endif

@@ -3,13 +3,13 @@
 
 Client::Client()
 	: _fd(-1), _ip(""), _nickname(""), _username(""), _realname(""),
-	  _recvBuffer(""), _passOk(false), _registered(false)
+	  _recvBuffer(""), _sendBuffer(""), _passOk(false), _registered(false)
 {
 }
 
 Client::Client(int fd, const std::string& ip)
 	: _fd(fd), _ip(ip), _nickname(""), _username(""), _realname(""),
-	  _recvBuffer(""), _passOk(false), _registered(false)
+	  _recvBuffer(""), _sendBuffer(""), _passOk(false), _registered(false)
 {
 }
 
@@ -46,6 +46,13 @@ const std::string& Client::getRecvBuffer() const
 {
 	return _recvBuffer;
 }
+
+//luialvar
+const std::string& Client::getSendBuffer() const
+{
+	return _sendBuffer;
+}
+//luialvar
 
 bool Client::hasPassedPassword() const
 {
@@ -111,3 +118,20 @@ void Client::eraseFromBuffer(std::string::size_type count)
 	}
 	_recvBuffer.erase(0, count);
 }
+
+
+void Client::appendToSendBuffer(const std::string& data)
+{
+	_sendBuffer += data;
+}
+
+void Client::eraseFromSendBuffer(std::string::size_type count)
+{
+	if (count >= _sendBuffer.size())
+	{
+		_sendBuffer.clear();
+		return;
+	}
+	_sendBuffer.erase(0, count);
+}
+
