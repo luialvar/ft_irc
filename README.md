@@ -16,7 +16,7 @@ Dynamic Channels: Channels (chat rooms starting with #) are created dynamically 
 
 Standardized Numeric Replies: The server communicates with clients through both direct commands and 3-digit "numeric replies" (codes from 001 to 599) to notify events, states, or syntax errors (e.g., 461 for missing parameters or 482 for channel operator privileges denied).
 
-###Instructions
+### Instructions
 1. **Compile the project:**
 
 ```bash
