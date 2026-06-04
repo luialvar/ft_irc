@@ -124,6 +124,8 @@ bool	ModeCommand::_parse()
 					if (!currentParam.empty())
 						_modeParams.push_back(currentParam);
 				}
+				else
+					_server.sendReply(_client, formatError(461, _client.getNickname(), std::string(1, c), _args[0]));
 			}
 			else
 			{
