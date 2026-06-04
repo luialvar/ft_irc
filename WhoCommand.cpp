@@ -82,7 +82,7 @@ void WhoCommand::sendInfo()
             flag = "H";
 
         str = 
-            " 352 " +
+            "352 " +
             _client.getNickname() + " " +
             _channel->getName() + " " +
             target->getUsername() + " localhost " +
