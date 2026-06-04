@@ -35,7 +35,7 @@ static std::string formatError(int code, const std::string& nick, const std::str
     return ss.str();
 }
 
-PrivmsgCommand::PrivmsgCommand(Server &server, Client &client, const std::vector<std::string> &args): _server(server), _client(client), _args(args), _channel(NULL)
+PrivmsgCommand::PrivmsgCommand(Server &server, Client &client, const std::vector<std::string> &args): _server(server), _client(client), _args(args)
 {}
 
 PrivmsgCommand::~PrivmsgCommand(){}

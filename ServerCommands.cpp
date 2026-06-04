@@ -248,6 +248,8 @@ void Server::smokeGrenade(Client& _client, const std::string& _command, const st
 			{
 				_ch->removeOperator(&_client);
 				_ch->addOperator(_ch->getClients().front());
+				for(int i = 0; i < (int)_ch->getClientCount(); i++)
+					sendReply(*_ch->getClients()[i], "MODE " + _ch->getName() + " +o " + _ch->getClients().front()->getNickname());
 			}
 
 			//Notifica a los clientes que comparte canal con el usuario que ha usado QUIT y 

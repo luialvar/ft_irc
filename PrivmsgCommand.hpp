@@ -11,7 +11,7 @@ class PrivmsgCommand
 		Server&	_server;
 		Client&	_client;
 		const std::vector<std::string>&	_args;
-		Channel	*_channel;
+		//Channel	*_channel;
 		std::vector<std::string> _targets;
 
         bool msgChannel(Channel &_targetChannel);
