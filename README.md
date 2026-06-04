@@ -46,7 +46,10 @@ Once connected, you must register by sending the following commands in order:
 PASS <password>
 NICK <your_nickname>
 USER <your_username> 0 * :<your_real_name>
+
 ```
+Once connected and registered, to use the various availaibles commands, refer to the resources linked below.  
+
 ### Resources
 
 *   **RFC 2812**: Internet Relay Chat: Client Protocol
@@ -55,7 +58,7 @@ USER <your_username> 0 * :<your_real_name>
 
 *   https://medium.com/@afatir.ahmedfatir/small-irc-server-ft-irc-42-network-7cee848de6f9
 
-*   https://modern.ircdocs.horse/#join-message
+*   https://modern.ircdocs.horse/
 
 *   **AI Usage Declaration**:
  AI was used to assist in debugging (such as remembering to capture error codes when calling functions), verifying permissions (checking whether a client is authorized to perform a specific action), generating repetitive boilerplate code like getters and setters, locating precise error codes within the official documentation, and filtering external documentation to check its relevance for specific edge cases.
