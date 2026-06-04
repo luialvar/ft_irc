@@ -13,6 +13,9 @@ private:
 	std::string	_username;
 	std::string	_realname; //not sure if we need it
 	std::string	_recvBuffer;
+	//luialvar
+	std::string	_sendBuffer;
+	//luialvar
 	bool		_passOk;
 	bool		_registered;
 
@@ -27,6 +30,9 @@ public:
 	const std::string& getUsername() const;
 	const std::string& getRealname() const;
 	const std::string& getRecvBuffer() const;
+	//luialvar
+	const std::string& getSendBuffer() const;
+	//luialvar
 	bool hasPassedPassword() const;
 	bool isRegistered() const;
 
@@ -41,6 +47,10 @@ public:
 	void appendToBuffer(const std::string& data);
 	void clearBuffer();
 	void eraseFromBuffer(std::string::size_type count);
+	//luialvar
+	void appendToSendBuffer(const std::string& data);
+	void eraseFromSendBuffer(std::string::size_type count);
+	//luialvar
 };
 
 #endif

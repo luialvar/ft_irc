@@ -62,11 +62,14 @@ int main(int argc, char **argv)
 
 	try
 	{
-		//(ctrl + c) or (ctrl + \)
-		std::signal(SIGINT, Server::signalHandler);
-		std::signal(SIGQUIT, Server::signalHandler);
+			//(ctrl + c) or (ctrl + \)
+			std::signal(SIGINT, Server::signalHandler);
+			std::signal(SIGQUIT, Server::signalHandler);
+			std::signal(SIGPIPE, SIG_IGN);
+			//esto arregla que si intentamos escribir en un socket 
+			//cuya conexión ya está cerrada, no termines todo el servidor
 
-		Server server(port, password);
+			Server server(port, password);
 		server.run();
 	}
 	catch (const std::exception& e)

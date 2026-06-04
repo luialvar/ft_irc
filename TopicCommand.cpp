@@ -83,14 +83,14 @@ void TopicCommand::checkOrChangeTopic()
 		//Si está vacío devolvemos el RPL_NOTOPIC
 		if (_channel->getTopic().empty())
 		{
-			_server.sendReply(_client, " 331 " + _client.getNickname() + " " + _channel->getName() + " :No topic is set");
+			_server.sendReply(_client, "331 " + _client.getNickname() + " " + _channel->getName() + " :No topic is set");
 			return;
 		}
 		//Si no, devolvemos el RPL_TOPIC y el RPL_TOPICWHOTIME
 		else
 		{
-			_server.sendReply(_client, " 332 " + _client.getNickname() + " " + _channel->getName() + " :" + _channel->getTopic());
-			_server.sendReply(_client, " 333 " + _client.getNickname() + " " + _channel->getName() + " " + _channel->getTopicSetter() + " " + _channel->getTopicTime());
+			_server.sendReply(_client, "332 " + _client.getNickname() + " " + _channel->getName() + " :" + _channel->getTopic());
+			_server.sendReply(_client, "333 " + _client.getNickname() + " " + _channel->getName() + " " + _channel->getTopicSetter() + " " + _channel->getTopicTime());
 			return;
 		}
 	}
@@ -141,12 +141,14 @@ void TopicCommand::checkOrChangeTopic()
 		}
 
 		//Recorrer todos los clientes del canal y mandarles el mensaje
-		for(int i = 0; i < (int)_channel->getClientCount(); i++)
-		{
-			int fd = _channel->getClients()[i]->getFd();
-			send(fd, str.c_str(), str.length(), 0);
-		}
+			for(int i = 0; i < (int)_channel->getClientCount(); i++)
+			{
+				int fd = _channel->getClients()[i]->getFd();
+				//luialvar
+				_server.sendMessage(fd, str);
+				//luialvar
+			}
 		return;
-			
+
 	}
 }

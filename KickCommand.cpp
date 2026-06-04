@@ -43,8 +43,8 @@ void KickCommand::execute()
 {
     if (!parse())
     return;
-    
-    
+
+
     _kickClients = split(_args[1], ',');
 
     for(int i = 0; i < (int)_kickClients.size(); i++)
@@ -58,50 +58,50 @@ bool    KickCommand::parse()
         _server.sendReply(_client, formatError(461, _client.getNickname(), "KICK", ""));
         return false;
     }
-    
+
     _channel = _server.findChannel(_args[0]);
     if (_channel == NULL)
     {
         _server.sendReply(_client, formatError(403, _client.getNickname(), _args[0], ""));
         return false;
     }
-    
+
     if (!_channel->hasClient(&_client))
     {
         _server.sendReply(_client, formatError(442, _client.getNickname(), _args[0], ""));
         return false;
     }
-    
+
     if (!_channel->isOperator(&_client))
     {
         _server.sendReply(_client, formatError(482, _client.getNickname(), _channel->getName(), ""));
         return false;
     }
-    
+
     if (_args.size() == 3)
         _reason = _args[2];
     else
         _reason = "";
-    
+
     return true;
 }
 
 void    KickCommand::checkForKick(std::string _clientToKick)
 {
     Client *_target = _server.findClientByNickname(_clientToKick);
-    
+
     if (_target == NULL)
     {
         _server.sendReply(_client, formatError(401, _client.getNickname(), _clientToKick, ""));
         return;
     }
-    
+
     if (!_channel->hasClient(_target))
     {
         _server.sendReply(_client, formatError(441, _client.getNickname(), _target->getNickname(), _channel->getName()));
         return;
     }
-    
+
     std::string _str;
     _str =
         ":" +
@@ -119,11 +119,13 @@ void    KickCommand::checkForKick(std::string _clientToKick)
         "\r\n";
 
     //Recorrer todos los clientes del canal y mandarles el mensaje
-    for(int i = 0; i < (int)_channel->getClientCount(); i++)
-    {
-        int fd = _channel->getClients()[i]->getFd();
-        send(fd, _str.c_str(), _str.length(), 0);
-    }
+	    for(int i = 0; i < (int)_channel->getClientCount(); i++)
+	    {
+	        int fd = _channel->getClients()[i]->getFd();
+	        //luialvar
+	        _server.sendMessage(fd, _str);
+	        //luialvar
+	    }
 
     if (_channel->isOperator(_target))
         _channel->removeOperator(_target);

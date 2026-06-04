@@ -45,19 +45,23 @@ void	PartCommand::execute()
 	{
 		if (!parse(_channels[i]))
 			continue;
-			
+
 		//Borrar el cliente del canal
 		_channel->removeClient(&_client);
-		
+
 		//Comando para HexChat y mensaje para todos los clientes del canal
 		if (_args.size() == 2)
 			reason = " :" + _args[1];
 		std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@" + _server.getServerName() + " PART :" + _channel->getName() + reason + "\r\n";
-		send(_client.getFd(), str.c_str(), str.length(), 0);
+		//luialvar
+		_server.sendMessage(_client.getFd(), str);
+		//luialvar
 		for(int j = 0; j < (int)_channel->getClientCount(); j++)
 		{
 			int fd = _channel->getClients()[j]->getFd();
-			send(fd, str.c_str(), str.length(), 0);
+			//luialvar
+			_server.sendMessage(fd, str);
+			//luialvar
 		}
 
 		//Comprobar si queda alguien en el canal por si hay que eliminar dicho canal o nombrar otro operador en el caso que este lo fuese

@@ -49,9 +49,13 @@ private:
 
 
 		void initServerSocket(); // [x]
-		void acceptNewClient(); // [x]
-		void receiveNewData(int fd); // [x]
-		void closeAllFds(); // [x]
+			void acceptNewClient(); // [x]
+			void receiveNewData(int fd); // [x]
+		//luialvar
+		void flushClientOutput(int fd);
+		void setPollout(int fd, bool enabled);
+		//luialvar
+			void closeAllFds(); // [x]
 		void removeClient(int fd); // [x]
 
 		Client* findClientByFd(int fd); // [x]

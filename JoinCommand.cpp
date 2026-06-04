@@ -80,10 +80,10 @@ void JoinCommand::execute()
 			_aux_key = "";
 		if ((!_channels.empty()) && !checkModesAndConditions(_aux_key))
 			continue;
-		
+
 		_channel->addClient(&_client);
 
-		std::string str = 
+		std::string str =
 			":" +
 			_client.getNickname() +
 			"!" +
@@ -95,11 +95,13 @@ void JoinCommand::execute()
 			"\r\n";
 
 		//Recorrer todos los clientes del canal y mandarles el mensaje
-		for(int i = 0; i < (int)_channel->getClientCount(); i++)
-		{
-			int fd = _channel->getClients()[i]->getFd();
-			send(fd, str.c_str(), str.length(), 0);
-		}
+			for(int i = 0; i < (int)_channel->getClientCount(); i++)
+			{
+				int fd = _channel->getClients()[i]->getFd();
+				//luialvar
+				_server.sendMessage(fd, str);
+				//luialvar
+			}
 
 		sendReplies();
 	}
@@ -166,7 +168,9 @@ void	JoinCommand::createAndJoin(std::string _channelName)
 	_server.add_newChannel(_newChannel);
 	_channel = _server.findChannel(_channelName);
 	std::string str = ":" + _client.getNickname() + "!" + _client.getUsername() + "@" + _server.getServerName() + " JOIN :" + _channel->getName() + "\r\n";
-	send(_client.getFd(), str.c_str(), str.length(), 0);
+	//luialvar
+	_server.sendMessage(_client.getFd(), str);
+	//luialvar
 	sendReplies();
 }
 

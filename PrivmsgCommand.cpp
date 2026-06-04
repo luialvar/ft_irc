@@ -35,7 +35,7 @@ static std::string formatError(int code, const std::string& nick, const std::str
     return ss.str();
 }
 
-PrivmsgCommand::PrivmsgCommand(Server &server, Client &client, const std::vector<std::string> &args): _server(server), _client(client), _args(args), _channel(NULL)
+PrivmsgCommand::PrivmsgCommand(Server &server, Client &client, const std::vector<std::string> &args): _server(server), _client(client), _args(args)
 {}
 
 PrivmsgCommand::~PrivmsgCommand(){}
@@ -119,10 +119,12 @@ bool PrivmsgCommand::msgChannel(Channel &_targetChannel)
 		{
             //Excluir al cliente que inició el comando ya que a él ya le sale el mensaje en pantalla
             if (_targetChannel.getClients()[i] != &_client)
-            {
-                int fd = _targetChannel.getClients()[i]->getFd();
-                send(fd, str.c_str(), str.length(), 0);
-            }
+	            {
+	                int fd = _targetChannel.getClients()[i]->getFd();
+	                //luialvar
+	                _server.sendMessage(fd, str);
+	                //luialvar
+	            }
 		}
         return true;
     }
@@ -157,6 +159,8 @@ bool PrivmsgCommand::msgUser(Client &_targetUser)
             _args[1] +
             "\r\n";
 
-    send(_targetUser.getFd(), str.c_str(), str.length(), 0);
+    //luialvar
+    _server.sendMessage(_targetUser.getFd(), str);
+    //luialvar
     return true;
 }
