@@ -44,8 +44,7 @@ void InviteCommand::execute()
 	if (!parseAndChecks())
 		return;
     _channel->addInvite(_target);
-    //_server.sendReply(_client, ("341 " + _client.getNickname() + " " + _target->getNickname() + " " + _channel->getName()));
-    //_server.sendMessage(_target->getFd(), "You have been invited to the channel " + _channel->getName() + " by " + _client.getNickname());
+    _server.sendReply(_client, ("341 " + _client.getNickname() + " " + _target->getNickname() + " " + _channel->getName()));
 	std::string str = 
 		":" +
 		_client.getNickname() +

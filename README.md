@@ -50,6 +50,19 @@ USER <your_username> 0 * :<your_real_name>
 ```
 Once connected and registered, to use the various availaibles commands, refer to the resources linked below.  
 
+To test the case qhere the server keep working as intended while a partial command is being set, execute the nc client with this input to make it wait between each command used for registration:
+(                                                          
+  printf 'PASS 4242\r\n'
+  sleep 1
+  printf 'NICK ju'
+  sleep 80
+  printf 'an\r\n'
+  printf 'USER juan 0 * :Juan\r\n'
+  while IFS= read -r line; do
+    printf '%s\r\n' "$line"
+  done
+) | nc -C 127.0.0.1 6667
+
 ### Resources
 
 *   **RFC 2812**: Internet Relay Chat: Client Protocol
