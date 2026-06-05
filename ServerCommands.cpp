@@ -49,7 +49,7 @@ void Server::processClientBuffer(Client& client)
 	while (extractOneMessage(client, message))
 	{
 		std::cout << "Client <" << client.getFd() << "> Message: "
-			<< "'" << message << "'" << std::endl;
+			<< "'" << message << "'" << std::endl << std::endl;
 
 		CommandParts parts;
 		//luialvar

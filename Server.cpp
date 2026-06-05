@@ -189,7 +189,7 @@ void Server::receiveNewData(int fd)
 	if (bytes > 0)
 	{
 		buffer[bytes] = '\0';
-		std::cout << "Client <" << fd << "> Data: " << buffer;
+		std::cout << "Client <" << fd << "> Data: " << buffer << std::endl;
 		Client *client = findClientByFd(fd);
 			if (client == 0)
 			{
